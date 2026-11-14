@@ -607,7 +607,7 @@ body.locked { overflow: hidden; height: 100vh; height: 100svh; }
       <div class="grid md:grid-cols-2 gap-6 mt-14 text-left">
         <!-- Бутон 1: сърца -->
         <div class="glass reveal p-8 sm:p-10 flex flex-col items-center text-center">
-          <i data-lucide="heart-handshake" class="w-9 h-9 text-coral" style="stroke-width:1.2"></i>
+          <i data-lucide="handshake" class="w-9 h-9 text-amber-400" style="stroke-width:1.2"></i>
           <button class="warm-btn mt-6" id="heartBtn" type="button">Натисни, когато ти дотежи</button>
           <div class="soft-open w-full" id="heartCard">
             <div>
@@ -1130,7 +1130,7 @@ const MUSIC_VOLUME = 0.85;
   $('#passBtn').addEventListener('click', () => pass.classList.add('flipped'));
   $('#passBack').addEventListener('click', () => pass.classList.toggle('flipped'));
 
-  /* ---------- Сърца (бавни, мечтателни частици) ---------- */
+  /* ---------- Златни искри (бавни, мечтателни частици) ---------- */
   const cv = $('#hearts'), ctx = cv.getContext('2d');
   let parts = [], animating = false;
   function size() { const d = devicePixelRatio || 1; cv.width = innerWidth * d; cv.height = innerHeight * d; ctx.setTransform(d, 0, 0, d, 0, 0); }
@@ -1138,8 +1138,11 @@ const MUSIC_VOLUME = 0.85;
   function heart(x, y, s, a, hue) {
     ctx.save(); ctx.translate(x, y); ctx.scale(s, s); ctx.globalAlpha = a;
     ctx.fillStyle = `hsl(${hue} 90% 66%)`; ctx.shadowColor = `hsl(${hue} 95% 60%)`; ctx.shadowBlur = 16;
-    ctx.beginPath(); ctx.moveTo(0, 3);
-    ctx.bezierCurveTo(-10, -5, -5, -13, 0, -7); ctx.bezierCurveTo(5, -13, 10, -5, 0, 3);
+    // златна искра (четирилъчна звезда), като светлина от прожектор над сцената
+    ctx.rotate(Math.sin(x * 0.01 + y * 0.01) * 0.6);
+    ctx.beginPath(); ctx.moveTo(0, -11);
+    ctx.quadraticCurveTo(1.6, -1.6, 11, 0); ctx.quadraticCurveTo(1.6, 1.6, 0, 11);
+    ctx.quadraticCurveTo(-1.6, 1.6, -11, 0); ctx.quadraticCurveTo(-1.6, -1.6, 0, -11);
     ctx.fill(); ctx.restore();
   }
   function burst(fromEl) {
@@ -1149,7 +1152,7 @@ const MUSIC_VOLUME = 0.85;
       x: cx + (Math.random() - .5) * r.width, y: cy + (Math.random() - .5) * 20,
       vx: (Math.random() - .5) * 0.5, vy: -(0.35 + Math.random() * 0.9),
       s: Math.random() < .7 ? 0.7 + Math.random() * 1.1 : 0.25, life: 0, max: 260 + Math.random() * 200,
-      hue: Math.random() < .6 ? 38 + Math.random() * 12 : 350 + Math.random() * 10,
+      hue: 34 + Math.random() * 16,
       w: Math.random() * Math.PI * 2, spark: Math.random() < .3
     });
     if (!animating) { animating = true; requestAnimationFrame(loop); }
