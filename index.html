@@ -437,7 +437,7 @@ body.locked { overflow: hidden; height: 100vh; height: 100svh; }
           <i data-lucide="coffee" class="w-7 h-7 text-amber-400" style="stroke-width:1.3"></i>
           <!-- [PLACEHOLDER: брой кафета – смени data-to="1000"] -->
           <div class="font-display tight font-bold text-5xl gradient-text"><span class="counter" data-to="1000">0</span>+</div>
-          <p class="text-mist leading-relaxed">споделени кафета, разговори и смях, които направиха работата ни по-човешка.</p>
+          <p class="text-mist leading-relaxed">споделени кафета, разговори и смях, които направиха всеки ден на работа по-човешки.</p>
         </article>
 
         <!-- Карта 4 (широка): Златните правила -->
@@ -458,11 +458,11 @@ body.locked { overflow: hidden; height: 100vh; height: 100svh; }
             </figure>
             <figure class="quote">
               <blockquote class="font-display tight font-semibold text-3xl sm:text-5xl leading-tight">Първо спокойствие. После всичко останало.</blockquote>
-              <figcaption class="text-mist mt-4">Правило, което ни научи без думи.</figcaption>
+              <figcaption class="text-mist mt-4">Правило, което ме научи без думи.</figcaption>
             </figure>
             <figure class="quote">
               <blockquote class="font-display tight font-semibold text-3xl sm:text-5xl leading-tight">Излез и се забавлявай. Сцената ще те усети.</blockquote>
-              <figcaption class="text-mist mt-4">Така танцуваше на бурето. Така ни научи и нас.</figcaption>
+              <figcaption class="text-mist mt-4">Така танцуваше на бурето. Така научи и мен.</figcaption>
             </figure>
           </div>
           <button class="glass-btn mt-8" id="nextQuote" type="button">Следваща мъдрост <i data-lucide="arrow-right"></i></button>
@@ -491,7 +491,7 @@ body.locked { overflow: hidden; height: 100vh; height: 100svh; }
         </figure>
         <figure class="moment reveal glass !rounded-[24px] overflow-hidden">
           <div class="overflow-hidden aspect-[4/3]"><img src="assets/photos/08.jpg" alt="Заедно на сцената" class="w-full h-full object-cover" loading="lazy"></div>
-          <figcaption class="p-6"><p class="font-display tight font-semibold text-xl">Заедно, нагоре</p><p class="text-mist mt-1">Един държи, другите се качват. Знаем кой беше основата.</p></figcaption>
+          <figcaption class="p-6"><p class="font-display tight font-semibold text-xl">Заедно, нагоре</p><p class="text-mist mt-1">Един държи, другите се качват. Знам кой беше основата.</p></figcaption>
         </figure>
         <figure class="moment reveal glass !rounded-[24px] overflow-hidden sm:mt-16" style="--d:.15s">
           <div class="overflow-hidden aspect-[4/3]"><img src="assets/photos/14.jpg" alt="На масата с колегите" class="w-full h-full object-cover" loading="lazy"></div>
@@ -514,12 +514,12 @@ body.locked { overflow: hidden; height: 100vh; height: 100svh; }
         <!-- Бутон 1: сърца -->
         <div class="glass reveal p-8 sm:p-10 flex flex-col items-center text-center">
           <i data-lucide="heart-handshake" class="w-9 h-9 text-coral" style="stroke-width:1.2"></i>
-          <button class="warm-btn mt-6" id="heartBtn" type="button"><i data-lucide="heart"></i>Натисни, когато ти дотежи или ти липсваме</button>
+          <button class="warm-btn mt-6" id="heartBtn" type="button"><i data-lucide="heart"></i>Натисни, когато ти дотежи или ти липсвам</button>
           <div class="soft-open w-full" id="heartCard">
             <div>
               <div class="mt-8 p-6 rounded-2xl border border-amber-300/20 bg-amber-200/[.04] text-left">
                 <!-- [PLACEHOLDER: текст на картата за подкрепа] -->
-                <p class="font-serif text-lg leading-relaxed text-cream/90">Където и да си, каквото и да става, знай едно: има кой да ти вдигне. Тук винаги ще има място за теб на масата, кафе, което те чака, и хора, които те обичат.</p>
+                <p class="font-serif text-lg leading-relaxed text-cream/90">Където и да си, каквото и да става, знай едно: имаш на кого да звъннеш. При мен винаги има място за теб на масата, кафе, което те чака, и рамо, на което да се облегнеш.</p>
                 <p class="font-hand text-2xl text-amber-300 mt-4">Не си сам, батко.</p>
               </div>
             </div>
@@ -693,11 +693,13 @@ const MUSIC_VOLUME = 0.85;
   const totalEst = SHOW.reduce((a, s) => a + (s.dur || (s.type === 'photo' ? PHOTO_MS : (s.max || 9000))), 0);
   let elapsed = 0, tickStart = 0, curDur = 0;
 
+  let gen = 0; // всяка смяна на кадър получава номер; стари таймери/onended се игнорират
   function next() {
     clearTimeout(timer);
+    const my = ++gen;
     if (idx >= 0) {
       slides[idx].classList.remove('on');
-      const v = slides[idx].querySelector('video'); if (v) setTimeout(() => v.pause(), 1400);
+      const v = slides[idx].querySelector('video'); if (v) { v.onended = null; setTimeout(() => v.pause(), 1400); }
       elapsed += curDur;
     }
     idx++;
@@ -713,8 +715,8 @@ const MUSIC_VOLUME = 0.85;
       const p = v.play(); if (p) p.catch(() => {});
       const len = (isFinite(v.duration) && v.duration ? v.duration * 1000 : 8000);
       curDur = Math.min(item.max || Infinity, len - 300);
-      v.onended = () => next();
-      timer = setTimeout(next, curDur);
+      v.onended = () => { if (my === gen) next(); };
+      timer = setTimeout(() => { if (my === gen) next(); }, curDur);
     } else {
       curDur = item.dur || PHOTO_MS;
       timer = setTimeout(next, curDur);
