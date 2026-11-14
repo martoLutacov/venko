@@ -307,6 +307,22 @@ body.locked { overflow: hidden; height: 100vh; height: 100svh; }
 @keyframes wOut { to { opacity: 0; transform: translateX(70px) skewX(-18deg); filter: blur(8px); } }
 @media (max-width: 640px) { #subs { padding-bottom: max(86px, calc(env(safe-area-inset-bottom) + 86px)); } }
 
+/* ---------- Финал ---------- */
+#finale { position: fixed; inset: 0; z-index: 59; display: flex; align-items: center; justify-content: center;
+  pointer-events: none; opacity: 0; transition: opacity 2.6s ease 1.2s; background: radial-gradient(ellipse at center, rgba(245,158,11,.08), transparent 60%); }
+#finale.on { opacity: 1; }
+#finale p { text-shadow: 0 4px 40px rgba(0,0,0,.6); }
+body.finale #page { opacity: 0; transition: opacity 2.4s ease; }
+body.finale #soundFab { opacity: 0; pointer-events: none; }
+#page { transition: opacity 1s ease; }
+/* Завесата се спуска обратно – по-бавно и над финалния текст */
+#stage.closing { background: transparent; transition: opacity 1.4s ease, visibility 0s; }
+#stage.closing #show, #stage.closing .show-bar, #stage.closing .show-ui { display: none; }
+#stage.closing .curtain { transition: transform 6s cubic-bezier(.45,0,.2,1), filter 6s ease; }
+#stage.closing .valance, #stage.closing .valance-trim { transition: transform 4s cubic-bezier(.45,0,.2,1) 1.5s, opacity 3s ease 2s; }
+#stage.closing .stage-title { transition: opacity 3s ease 5s, transform 3s var(--spring) 5s; }
+#stage.closing .rope-wrap { transition: opacity 2s ease 6s; }
+
 /* Плаващ бутон за звук (след слайдшоуто) */
 #soundFab { position: fixed; z-index: 50; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); opacity: 0; pointer-events: none; transition: opacity .8s; }
 #soundFab.show { opacity: 1; pointer-events: auto; }
@@ -453,7 +469,14 @@ body.locked { overflow: hidden; height: 100vh; height: 100svh; }
 </div>
 
 <!-- Музика – [PLACEHOLDER: смени файла в assets/audio/music.mp3] -->
-<audio id="music" src="assets/audio/music.mp3" preload="auto" loop></audio>
+<audio id="music" src="assets/audio/music.mp3" preload="auto"></audio>
+<!-- Второ копие за плавен преход, когато песента стигне края и продължи отново -->
+<audio id="music2" src="assets/audio/music.mp3" preload="auto"></audio>
+
+<!-- Финал: остава само последният ред от писмото, после завесата се спуска -->
+<div id="finale" aria-hidden="true">
+  <p class="font-serif text-cream text-center leading-snug text-[30px] sm:text-[52px] px-4">Защото ти си просто<br><span class="gradient-text font-semibold">Бати Венко</span> <span aria-hidden="true">❤️</span></p>
+</div>
 
 <!-- Субтитри с текста на песента (виж LYRICS_LRC в настройките по-долу) -->
 <!-- Надпис „Brother“, който изплува за кратко в центъра при припева -->
@@ -816,6 +839,15 @@ const LYRICS_LRC = `
 `;
 const LYRICS_OFFSET = 0;
 
+/* Когато песента свърши, продължава без пауза от това място (сек.),
+   с кратък плавен преход. 23.3 = точно преди „We've taken different paths“. */
+const LOOP_TO = 23.3;
+const LOOP_XFADE_AT = 199.0;   // от коя секунда започва преходът (края на песента)
+const LOOP_XFADE_MS = 1500;
+/* Финал: колко поне да стои само „Защото ти си просто Бати Венко“,
+   преди завесата да се спусне на следващото „I've got you, brother“ */
+const FINALE_HOLD_MS = 6000;
+
 /* ПРЕВОД НА БЪЛГАРСКИ (по-малкият ред под субтитрите)
    По един ред за всеки НЕпразен ред от LYRICS_LRC, в същия ред.
    Празен ред тук = няма превод за този ред. */
@@ -881,7 +913,8 @@ const MUSIC_VOLUME = 0.85;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const $ = s => document.querySelector(s);
   const stage = $('#stage'), show = $('#show'), bar = $('#showBar');
-  const music = $('#music'), rope = $('#rope'), ropeLine = $('#ropeLine');
+  let music = $('#music');
+  const audA = $('#music'), audB = $('#music2'), rope = $('#rope'), ropeLine = $('#ropeLine');
   const icons = () => window.lucide && lucide.createIcons();
   icons();
 
@@ -901,7 +934,7 @@ const MUSIC_VOLUME = 0.85;
     ['#muteBtn', '#soundFab'].forEach(id => { $(id).innerHTML = `<i data-lucide="${name}"></i>`; });
     icons();
   }
-  ['#muteBtn', '#soundFab'].forEach(id => $(id).addEventListener('click', () => { music.muted = !music.muted; setMuteIcons(); }));
+  ['#muteBtn', '#soundFab'].forEach(id => $(id).addEventListener('click', () => { audA.muted = audB.muted = !music.muted; setMuteIcons(); }));
 
   /* ---------- Слайдшоу ---------- */
   const slides = SHOW.map(item => {
@@ -965,6 +998,7 @@ const MUSIC_VOLUME = 0.85;
     if (running) return;
     running = true; finished = false; idx = -1; elapsed = 0;
     rope.classList.add('pulled');
+    (music === audA ? audB : audA).pause();
     music.currentTime = 0; music.volume = 0;
     const p = music.play(); if (p) p.catch(() => {});
     fade(MUSIC_VOLUME, 3500);
@@ -985,6 +1019,53 @@ const MUSIC_VOLUME = 0.85;
   const subBg = $('#subBg');
   let curLyric = -1;
   const esc = t => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  /* ---------- Безкрайна песен: в края преминава плавно обратно към LOOP_TO ---------- */
+  let xfading = false;
+  function crossfadeLoop() {
+    xfading = true;
+    const old = music, nxt = old === audA ? audB : audA, vol = old.volume;
+    nxt.muted = old.muted; nxt.currentTime = LOOP_TO; nxt.volume = 0;
+    const p = nxt.play(); if (p) p.catch(() => {});
+    music = nxt; curLyric = -1;
+    const t0 = performance.now();
+    (function step(t) {
+      const k = Math.min(1, (t - t0) / LOOP_XFADE_MS);
+      old.volume = vol * (1 - k); nxt.volume = Math.max(nxt.volume, vol * k);
+      if (k < 1) requestAnimationFrame(step); else { old.pause(); xfading = false; }
+    })(t0);
+  }
+  // резервен вариант, ако браузърът е приспал анимациите (напр. скрит таб)
+  [audA, audB].forEach(a => a.addEventListener('ended', () => { if (a === music && !xfading) { a.currentTime = LOOP_TO; a.play().catch(() => {}); } }));
+
+  /* ---------- Финал: само „Защото ти си просто Бати Венко“, после завесата ---------- */
+  let finaleOn = false, finaleReadyAt = 0, closing = false;
+  function startFinale() {
+    if (finaleOn || !finished) return;
+    finaleOn = true; finaleReadyAt = performance.now() + FINALE_HOLD_MS;
+    document.body.classList.add('finale');
+    $('#finale').classList.add('on');
+  }
+  function closeCurtain() {
+    if (closing) return;
+    closing = true;
+    stage.classList.add('closing');
+    stage.classList.remove('gone');
+    requestAnimationFrame(() => requestAnimationFrame(() => { stage.classList.remove('open'); rope.classList.remove('pulled'); }));
+    setTimeout(() => {
+      // завесата е спусната: връщаме страницата в началото, музиката бавно заглъхва
+      $('#finale').classList.remove('on');
+      document.body.classList.remove('finale');
+      document.body.classList.add('locked');
+      window.scrollTo(0, 0);
+      $('#soundFab').classList.remove('show');
+      bar.style.width = '0';
+      subsBox.classList.remove('page-mode');
+      stage.classList.remove('closing');
+      running = false; finaleOn = false; closing = false;
+      fade(0, 9000).then(() => { if (!running) { audA.pause(); audB.pause(); } });
+    }, 8000);
+  }
+
   const CHORUS_RE = /got you,? brother/i;
   // Кратък надпис „Brother“ в центъра на екрана при всеки ред от припева
   const popEl = $('#broPop');
@@ -1000,7 +1081,11 @@ const MUSIC_VOLUME = 0.85;
       const chorus = CHORUS_RE.test(text);
       subBg.innerHTML = chorus ? esc(bg || '').replace(/(брат(?:ко|е)?)/gi, '<span class="bro">$1</span>') : esc(bg || '');
       if (bg) subBg.classList.add('on');
-      if (chorus) popBrother();
+      if (chorus) {
+        // завесата се спуска точно на „I've got you, brother“
+        if (finaleOn && !closing && performance.now() >= finaleReadyAt) closeCurtain();
+        if (running && !finaleOn && !closing) popBrother();
+      }
       subLine.innerHTML = esc(text).split(' ').map((w, i) => chorus && /brother/i.test(w)
         ? `<span class="w bro" style="--i:${i}">${w.replace(/[^A-Za-z]+$/, '')}</span><span class="w" style="--i:${i}">${(w.match(/[^A-Za-z]+$/) || [''])[0]} </span>`
         : `<span class="w" style="--i:${i}">${w} </span>`).join('');
@@ -1008,6 +1093,7 @@ const MUSIC_VOLUME = 0.85;
     if (subLine.innerHTML) { subLine.classList.add('out'); setTimeout(put, 260); } else put();
   }
   (function lyricLoop() {
+    if (!music.paused && !xfading && music.currentTime >= LOOP_XFADE_AT) crossfadeLoop();
     if (LYRICS.length && !music.paused) {
       subsBox.classList.add('on');
       const t = music.currentTime;
@@ -1067,7 +1153,7 @@ const MUSIC_VOLUME = 0.85;
     acc += (inLetter ? LETTER_SCROLL_PX_S : AUTO_SCROLL_PX_S) * dt;
     window.scrollTo(0, acc);
     const max = document.documentElement.scrollHeight - innerHeight;
-    if (acc >= max - 1) return stopAutoScroll();
+    if (acc >= max - 1) { stopAutoScroll(); setTimeout(startFinale, 1800); return; }
     requestAnimationFrame(autoStep);
   }
   // Ако човек сам почне да скролва или натиска – авто-скролът спира
@@ -1174,7 +1260,8 @@ const MUSIC_VOLUME = 0.85;
   /* ---------- Отново завесата ---------- */
   $('#replay').addEventListener('click', () => {
     stopAutoScroll();
-    fade(0, 800).then(() => music.pause());
+    fade(0, 800).then(() => { audA.pause(); audB.pause(); });
+    finaleOn = false; closing = false; $('#finale').classList.remove('on'); document.body.classList.remove('finale'); stage.classList.remove('closing');
     document.body.classList.add('locked');
     window.scrollTo(0, 0);
     $('#soundFab').classList.remove('show');
