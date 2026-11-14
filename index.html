@@ -1,0 +1,908 @@
+<!doctype html>
+<!-- lang не е зададен нарочно: с lang="bg" шрифтовете минават към „българска кирилица“ (д като g, т като m), което тук е по-трудно за четене -->
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Бати Венко</title>
+<meta name="description" content="Подарък за Венелин Станчев – Бати Венко. С обич, уважение и благодарност.">
+<meta name="theme-color" content="#0a0a0c">
+
+<!-- ============================================================
+     ШРИФТОВЕ (с поддръжка на кирилица)
+     ============================================================ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Manrope:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;1,400&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+
+<!-- Tailwind: assets/tailwind.css е готов (вграден) вариант, за да работи сайтът и без интернет.
+     CDN скриптът отгоре позволява да добавяш нови Tailwind класове без build. -->
+<link rel="stylesheet" href="assets/tailwind.css">
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<!-- Lucide икони (локално копие) -->
+<script src="assets/vendor/lucide.min.js"></script>
+<script>
+  if (window.tailwind) tailwind.config = {
+    theme: {
+      extend: {
+        colors: { obsidian: '#0a0a0c', cream: '#f5f5f7', mist: '#a1a1a6', amber: { 450: '#f59e0b' }, coral: '#fb7185' },
+        fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], display: ['Manrope', 'Inter', 'sans-serif'], serif: ['Lora', 'Georgia', 'serif'], hand: ['Caveat', 'cursive'] }
+      }
+    }
+  };
+</script>
+
+<style>
+/* ============================================================
+   ОСНОВНИ ПРОМЕНЛИВИ
+   ============================================================ */
+:root {
+  --bg: #0a0a0c;
+  --cream: #f5f5f7;
+  --mist: #a1a1a6;
+  --amber: #f59e0b;
+  --coral: #fb7185;
+  --glass: rgba(255,255,255,0.04);
+  --hair: rgba(255,255,255,0.08);
+  --spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --velvet-1: #5a0b12;
+  --velvet-2: #7d1520;
+  --velvet-3: #3a060b;
+}
+html { background: var(--bg); }
+body {
+  background: var(--bg);
+  color: var(--cream);
+  font-family: Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+body.locked { overflow: hidden; height: 100vh; height: 100svh; }
+.tight { letter-spacing: -0.02em; }
+::selection { background: rgba(245,158,11,.35); }
+
+/* Фино зърно върху всичко – топло, като стара лента */
+.grain::before {
+  content: ""; position: fixed; inset: -50%; pointer-events: none; z-index: 1;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='.5'/></svg>");
+  opacity: .05; mix-blend-mode: overlay;
+}
+
+/* ============================================================
+   1. СЦЕНА / ЗАВЕСА
+   ============================================================ */
+#stage {
+  position: fixed; inset: 0; z-index: 60; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 120%, #1c0d06 0%, #050405 60%);
+  transition: opacity 1.6s var(--spring), visibility 0s linear 1.6s;
+}
+#stage.gone { opacity: 0; visibility: hidden; pointer-events: none; }
+
+/* Двете крила на завесата */
+.curtain {
+  position: absolute; top: 0; bottom: 0; width: 51%; z-index: 5;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,0) 70%, rgba(0,0,0,.6) 100%),
+    repeating-linear-gradient(90deg,
+      var(--velvet-3) 0px, var(--velvet-1) 14px, var(--velvet-2) 34px,
+      #8f1b27 44px, var(--velvet-2) 56px, var(--velvet-1) 74px, var(--velvet-3) 92px);
+  box-shadow: inset 0 0 120px rgba(0,0,0,.7);
+  transition: transform 3.2s cubic-bezier(.7,0,.2,1), filter 3.2s ease;
+  will-change: transform;
+}
+.curtain.left  { left: 0;  transform-origin: top left;  border-right: 1px solid rgba(0,0,0,.6); }
+.curtain.right { right: 0; transform-origin: top right; }
+.curtain::after { /* мек блясък на кадифето */
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 35%, rgba(255,160,120,.10), transparent 60%);
+}
+#stage.open .curtain.left  { transform: translateX(-96%) scaleX(.55); filter: brightness(.6); }
+#stage.open .curtain.right { transform: translateX(96%)  scaleX(.55); filter: brightness(.6); }
+
+/* Горна драперия (валанс) */
+.valance {
+  position: absolute; top: 0; left: 0; right: 0; height: 13vh; min-height: 70px; z-index: 7;
+  background:
+    radial-gradient(ellipse 60px 40px at 60px 100%, transparent 98%, transparent) ,
+    repeating-linear-gradient(90deg, var(--velvet-3) 0, var(--velvet-2) 30px, var(--velvet-1) 60px);
+  -webkit-mask: radial-gradient(circle 46px at 46px 100%, transparent 96%, #000 100%) 0 0 / 92px 100% repeat-x,
+                linear-gradient(#000, #000) 0 0 / 100% calc(100% - 30px) no-repeat;
+          mask: radial-gradient(circle 46px at 46px 100%, transparent 96%, #000 100%) 0 0 / 92px 100% repeat-x,
+                linear-gradient(#000, #000) 0 0 / 100% calc(100% - 30px) no-repeat;
+  box-shadow: 0 20px 40px rgba(0,0,0,.6);
+  transition: transform 3.2s cubic-bezier(.7,0,.2,1);
+}
+.valance-trim { position: absolute; top: calc(13vh - 34px); left: 0; right: 0; height: 4px; z-index: 8;
+  background: linear-gradient(90deg, #6b4a12, #e0b354, #6b4a12, #e0b354, #6b4a12); opacity: .7; }
+@media (max-height: 540px) { .valance-trim { top: 36px; } }
+#stage.open .valance { transform: translateY(-110%); transition: transform 2.6s cubic-bezier(.7,0,.2,1) .8s; }
+#stage.open .valance-trim { opacity: 0; transform: translateY(-20vh); transition: transform 2.6s cubic-bezier(.7,0,.2,1) .8s, opacity 1.5s ease .8s; }
+
+/* Прожектор върху завесата */
+.spot {
+  position: absolute; inset: 0; z-index: 6; pointer-events: none;
+  background: radial-gradient(ellipse 38% 55% at 50% 52%, rgba(255,214,150,.18), transparent 70%);
+  animation: breathe 7s ease-in-out infinite;
+}
+#stage.open .spot { opacity: 0; transition: opacity 1.2s; }
+
+/* Текст върху завесата */
+.stage-title {
+  position: absolute; z-index: 9; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+  text-align: center; padding: 0 16px; pointer-events: none;
+  transition: opacity 1s ease, transform 1.4s var(--spring);
+}
+#stage.open .stage-title { opacity: 0; transform: translateY(-40%); }
+
+/* Въжето */
+.rope-wrap {
+  position: absolute; z-index: 10; top: 0; right: clamp(18px, 7vw, 90px);
+  display: flex; flex-direction: column; align-items: center;
+  cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none;
+  transition: opacity .8s ease .4s;
+}
+.rope-wrap:active { cursor: grabbing; }
+.rope {
+  width: 12px; height: 46vh; border-radius: 6px;
+  background:
+    repeating-linear-gradient(-55deg, #7a5a1c 0 5px, #d8b25a 5px 9px, #a07a2a 9px 13px);
+  box-shadow: 2px 0 6px rgba(0,0,0,.6), inset -2px 0 3px rgba(0,0,0,.35);
+  transform-origin: top center;
+  animation: sway 5.5s ease-in-out infinite;
+}
+.tassel {
+  width: 34px; height: 64px; margin-top: -4px; position: relative;
+  animation: sway 5.5s ease-in-out infinite;
+  transform-origin: top center;
+}
+.tassel .knob { width: 26px; height: 22px; margin: 0 auto; border-radius: 50% 50% 40% 40%;
+  background: radial-gradient(circle at 35% 30%, #f5d27a, #9c7322 70%); box-shadow: 0 3px 8px rgba(0,0,0,.6); }
+.tassel .fringe { width: 34px; height: 44px; margin-top: -2px;
+  background: repeating-linear-gradient(90deg, #c99a3b 0 2px, #8a6418 2px 4px);
+  -webkit-mask: linear-gradient(#000 60%, transparent); mask: linear-gradient(#000 60%, transparent);
+  clip-path: polygon(15% 0, 85% 0, 100% 100%, 0 100%); }
+.rope-label {
+  margin-top: 14px; font-family: Manrope, sans-serif; font-weight: 600; font-size: 15px;
+  letter-spacing: .32em; text-transform: uppercase; color: #f3d9a4;
+  text-shadow: 0 0 18px rgba(245,158,11,.55);
+  animation: hint 2.8s ease-in-out infinite; padding-left: .32em;
+}
+.rope-label small { display:block; margin-top: 6px; letter-spacing: .08em; text-transform: none; font-weight: 400; font-size: 11px; color: rgba(243,217,164,.55); text-align: center; animation: none; }
+.rope-wrap.pulled .rope, .rope-wrap.pulled .tassel { animation: none; }
+#stage.open .rope-wrap { opacity: 0; pointer-events: none; }
+.rope-wrap:focus-visible { outline: 2px solid var(--amber); outline-offset: 6px; border-radius: 12px; }
+
+/* Телефон: въжето по-късо и встрани, заглавието не се застъпва */
+@media (max-width: 640px) {
+  .rope-wrap { right: 14px; }
+  .rope { height: 34vh; width: 10px; }
+  .stage-title { padding: 0 70px 0 16px; }
+  .rope-label { font-size: 13px; letter-spacing: .22em; padding-left: .22em; }
+}
+@keyframes sway { 0%,100% { transform: rotate(0.8deg); } 50% { transform: rotate(-0.8deg); } }
+@keyframes hint { 0%,100% { opacity: .65; transform: translateY(0); } 50% { opacity: 1; transform: translateY(4px); } }
+@keyframes breathe { 0%,100% { opacity: .75; transform: scale(1); } 50% { opacity: 1; transform: scale(1.06); } }
+
+/* ============================================================
+   2. СЛАЙДШОУ (снимки и видеа)
+   ============================================================ */
+#show { position: absolute; inset: 0; z-index: 2; background: #050405; }
+.slide {
+  position: absolute; inset: 0; opacity: 0; overflow: hidden;
+  transition: opacity 1.4s ease;
+}
+.slide.on { opacity: 1; }
+.slide .bg { position: absolute; inset: -40px; background-size: cover; background-position: center; filter: blur(34px) brightness(.45) saturate(1.1); transform: scale(1.1); }
+.slide .fg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 4vh 4vw; }
+.slide img, .slide video {
+  max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 14px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.6);
+}
+.slide.on img { animation: kenburns var(--dur, 6s) ease-out forwards; }
+@keyframes kenburns { from { transform: scale(1.0) translate3d(0,0,0); } to { transform: scale(1.07) translate3d(0,-1%,0); } }
+.slide .vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55)); }
+.slide.title-card .fg { flex-direction: column; text-align: center; }
+.show-bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; z-index: 12; background: linear-gradient(90deg, var(--amber), var(--coral)); box-shadow: 0 0 12px rgba(245,158,11,.6); }
+.show-ui { position: absolute; z-index: 12; bottom: max(18px, env(safe-area-inset-bottom)); right: 16px; display: flex; gap: 8px; opacity: 0; transition: opacity .8s ease; }
+#stage.open .show-ui { opacity: 1; transition-delay: 3s; }
+
+/* Стъклен бутон */
+.glass-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 16px; border-radius: 999px; font-size: 13px; color: var(--cream);
+  background: rgba(20,18,18,.45); border: 1px solid var(--hair);
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+  transition: transform .5s var(--spring), background .3s, box-shadow .4s;
+}
+.glass-btn:hover { transform: translateY(-2px); background: rgba(40,34,30,.6); box-shadow: 0 8px 30px rgba(245,158,11,.15); }
+.glass-btn:active { transform: scale(.98); }
+.glass-btn svg { width: 16px; height: 16px; stroke-width: 1.5; }
+
+/* Плаващ бутон за звук (след слайдшоуто) */
+#soundFab { position: fixed; z-index: 50; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); opacity: 0; pointer-events: none; transition: opacity .8s; }
+#soundFab.show { opacity: 1; pointer-events: auto; }
+
+/* ============================================================
+   3. СТРАНИЦАТА СЛЕД ЗАВЕСАТА
+   ============================================================ */
+.reveal { opacity: 0; transform: translateY(30px) scale(.97); transition: opacity 1.4s var(--spring), transform 1.4s var(--spring); transition-delay: var(--d, 0s); }
+.reveal.in { opacity: 1; transform: none; }
+
+.glass {
+  background: var(--glass); border: 1px solid var(--hair); border-radius: 28px;
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+  position: relative; overflow: hidden;
+}
+/* Светлина, която следва курсора */
+.glass::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .5s;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(245,158,11,.10), transparent 45%);
+}
+.glass:hover::before { opacity: 1; }
+
+/* Дишаща аврора зад героя */
+.aurora {
+  position: absolute; width: 70vmax; height: 70vmax; left: 50%; top: 42%; transform: translate(-50%,-50%);
+  background: radial-gradient(circle, rgba(245,158,11,.22) 0%, rgba(251,113,133,.10) 35%, transparent 65%);
+  filter: blur(40px); animation: aurora 14s ease-in-out infinite; pointer-events: none;
+}
+@keyframes aurora {
+  0%,100% { transform: translate(-50%,-50%) scale(1); opacity: .8; }
+  50% { transform: translate(-48%,-53%) scale(1.12); opacity: 1; }
+}
+.gradient-text {
+  background: linear-gradient(180deg, #fff7e6 0%, #f5d08a 45%, #f59e0b 75%, #fb7185 110%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.pill-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 0 rgba(245,158,11,.6); animation: pulse 2.4s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(245,158,11,.55); } 70% { box-shadow: 0 0 0 10px rgba(245,158,11,0); } 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); } }
+
+.portrait { transform-style: preserve-3d; transition: transform .8s var(--spring); }
+.portrait-glow { position: absolute; inset: -18%; background: radial-gradient(circle, rgba(245,158,11,.35), transparent 62%); filter: blur(30px); z-index: -1; }
+
+.scroll-ind { width: 22px; height: 36px; border: 1px solid rgba(245,245,247,.3); border-radius: 12px; position: relative; }
+.scroll-ind::after { content: ""; position: absolute; left: 50%; top: 7px; width: 3px; height: 7px; margin-left: -1.5px; border-radius: 2px; background: var(--cream); animation: wheel 2.2s var(--spring) infinite; }
+@keyframes wheel { 0% { opacity: 0; transform: translateY(0); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(12px); } }
+
+/* Цитати */
+.quote { position: absolute; inset: 0; opacity: 0; transform: translateY(10px); transition: opacity .9s var(--spring), transform .9s var(--spring); }
+.quote.on { opacity: 1; transform: none; position: relative; }
+
+/* Галерия */
+.moment img { transition: transform 1.6s var(--spring); }
+.moment:hover img { transform: scale(1.06); }
+
+/* Бутони за подкрепа */
+.warm-btn {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 16px 26px; border-radius: 999px; font-weight: 500; font-family: Manrope, sans-serif;
+  color: #1a1206; background: linear-gradient(180deg, #ffd99a, #f59e0b);
+  box-shadow: 0 10px 30px rgba(245,158,11,.25), inset 0 1px 0 rgba(255,255,255,.5);
+  transition: transform .6s var(--spring), box-shadow .5s;
+}
+.warm-btn.ghost { color: var(--cream); background: rgba(255,255,255,.05); border: 1px solid rgba(245,158,11,.35); box-shadow: none; }
+.warm-btn:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(245,158,11,.35); }
+.warm-btn:active { transform: scale(.98); }
+.warm-btn svg { width: 18px; height: 18px; stroke-width: 1.6; }
+
+.soft-open { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 1.2s var(--spring), opacity 1.2s var(--spring); }
+.soft-open > div { overflow: hidden; }
+.soft-open.open { grid-template-rows: 1fr; opacity: 1; }
+
+/* Златна карта (Wallet стил) */
+.pass-scene { perspective: 1400px; }
+.pass { position: relative; width: 100%; aspect-ratio: 1.586; transform-style: preserve-3d; transition: transform 1.6s var(--spring); }
+.pass.flipped { transform: rotateY(180deg); }
+.pass-face { position: absolute; inset: 0; border-radius: 22px; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
+.pass-front { background: linear-gradient(135deg, #1a1712, #0f0d0b); border: 1px dashed rgba(245,158,11,.35); display: flex; align-items: center; justify-content: center; }
+.pass-back {
+  transform: rotateY(180deg);
+  background:
+    linear-gradient(115deg, transparent 30%, rgba(255,240,200,.28) 45%, transparent 60%),
+    linear-gradient(135deg, #3b2a0c 0%, #8a6420 30%, #c9a050 50%, #7a5518 70%, #2e2008 100%);
+  background-size: 250% 100%, 100% 100%;
+  box-shadow: 0 30px 70px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.25);
+  color: #1b1307;
+  animation: sheen 6s ease-in-out infinite;
+}
+@keyframes sheen { 0%,100% { background-position: 120% 0, 0 0; } 50% { background-position: -20% 0, 0 0; } }
+
+/* Писмото */
+.letter p { font-family: Lora, Georgia, serif; font-size: clamp(18px, 2.1vw, 21px); line-height: 1.85; color: #e9e6e1; margin: 0 0 1.4em; }
+.letter p.lead::first-letter { font-family: Manrope, sans-serif; font-weight: 700; float: left; font-size: 3.4em; line-height: .9; padding: .06em .12em 0 0; color: var(--amber); }
+.letter .thanks p { margin: 0 0 .35em; }
+.letter .thanks { margin: 0 0 1.4em; border-left: 1px solid rgba(245,158,11,.35); padding-left: 22px; }
+.sig-text { font-family: Caveat, cursive; font-size: 92px; fill: transparent; stroke: #f5c46b; stroke-width: 1.2; stroke-dasharray: 900; stroke-dashoffset: 900; }
+.sig.in .sig-text { animation: sign 4.5s ease forwards .4s; }
+@keyframes sign { 70% { stroke-dashoffset: 0; fill: transparent; } 100% { stroke-dashoffset: 0; fill: #f5c46b; } }
+
+/* Частици за сърца */
+#hearts { position: fixed; inset: 0; pointer-events: none; z-index: 40; }
+
+/* Уважаваме „намалено движение“ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .3s !important; }
+  .reveal { transform: none; }
+  .sig-text { stroke-dashoffset: 0; fill: #f5c46b; }
+}
+</style>
+</head>
+
+<body class="locked grain">
+
+<!-- ============================================================
+     СЦЕНА: завеса + въже + слайдшоу
+     ============================================================ -->
+<div id="stage" aria-label="Сцена">
+  <!-- Слайдшоуто стои зад завесата и се показва, когато тя се отвори -->
+  <div id="show" aria-hidden="true"></div>
+  <div class="show-bar" id="showBar"></div>
+
+  <div class="curtain left"></div>
+  <div class="curtain right"></div>
+  <div class="valance"></div>
+  <div class="valance-trim"></div>
+  <div class="spot"></div>
+
+  <div class="stage-title">
+    <p class="font-display text-[11px] sm:text-xs tracking-[.45em] uppercase text-amber-200/60 mb-5 pl-[.45em]">Тази вечер на сцената</p>
+    <h1 class="font-display tight font-semibold text-[44px] sm:text-7xl text-[#f7e7c6]" style="text-shadow:0 4px 40px rgba(0,0,0,.6)">Бати Венко</h1>
+    <p class="font-serif italic text-amber-100/50 mt-4 text-base sm:text-lg">Венелин Станчев</p>
+  </div>
+
+  <!-- Въжето: може да се дръпне надолу или просто да се натисне -->
+  <div class="rope-wrap" id="rope" role="button" tabindex="0" aria-label="Дръпни въжето, за да отвориш завесата">
+    <div class="rope" id="ropeLine"></div>
+    <div class="tassel"><div class="knob"></div><div class="fringe"></div></div>
+    <div class="rope-label">Дръпни<small>и пусни звука</small></div>
+  </div>
+
+  <div class="show-ui">
+    <button class="glass-btn" id="muteBtn" type="button" aria-label="Звук"><i data-lucide="volume-2"></i></button>
+    <button class="glass-btn" id="skipBtn" type="button">Напред <i data-lucide="chevron-right"></i></button>
+  </div>
+</div>
+
+<!-- Музика – [PLACEHOLDER: смени файла в assets/audio/music.mp3] -->
+<audio id="music" src="assets/audio/music.mp3" preload="auto" loop></audio>
+
+<canvas id="hearts"></canvas>
+<button class="glass-btn" id="soundFab" type="button" aria-label="Звук"><i data-lucide="volume-2"></i></button>
+
+<main id="page" class="relative z-[2]">
+
+  <!-- ============================================================
+       1. ГЕРОЙ
+       ============================================================ -->
+  <section id="hero" class="relative min-h-[100svh] flex flex-col items-center justify-center px-4 pt-20 pb-28 overflow-hidden">
+    <div class="aurora"></div>
+
+    <div class="relative z-10 flex flex-col items-center text-center max-w-4xl">
+      <div class="reveal inline-flex items-center gap-2.5 px-4 py-2 rounded-full glass !rounded-full text-[11px] sm:text-xs tracking-[.2em] text-cream/80 font-medium">
+        <span class="pill-dot"></span>
+        <!-- [PLACEHOLDER: бадж] --> БЛАГОДАРЯ ЗА ВСИЧКО, ПРИЯТЕЛЮ
+      </div>
+
+      <h2 class="reveal font-display tight font-bold gradient-text mt-8 leading-[.95] text-[64px] sm:text-[110px] lg:text-[140px]" style="--d:.15s">Бати Венко.</h2>
+
+      <p class="reveal font-display tight text-mist text-lg sm:text-2xl mt-6 max-w-2xl leading-snug" style="--d:.3s">
+        <!-- [PLACEHOLDER: подзаглавие] -->
+        Повече от колега. Човек, на когото винаги можеш да разчиташ.
+      </p>
+
+      <!-- Портрет – [PLACEHOLDER: снимка] -->
+      <div class="reveal relative mt-14 w-[230px] sm:w-[300px]" style="--d:.45s">
+        <div class="portrait-glow"></div>
+        <div class="portrait rounded-[32px] overflow-hidden border border-white/10 shadow-2xl" id="portrait">
+          <img src="assets/photos/02.jpg" alt="Бати Венко на сцената" class="w-full aspect-[4/5] object-cover object-top" loading="eager">
+        </div>
+      </div>
+    </div>
+
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 text-mist/70 text-[11px] tracking-[.25em] uppercase">
+      <div class="scroll-ind"></div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       2. БЕНТО: „Какво оставяш след себе си“
+       ============================================================ -->
+  <section id="legacy" class="relative px-4 py-24 sm:py-32">
+    <div class="max-w-6xl mx-auto">
+      <p class="reveal text-amber-400/80 text-xs tracking-[.3em] uppercase font-medium">Наследството</p>
+      <h3 class="reveal font-display tight font-semibold text-4xl sm:text-6xl mt-3 max-w-3xl" style="--d:.1s">Какво оставяш след себе си.</h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 mt-12">
+
+        <!-- Карта 1 (голяма): брояч на години -->
+        <article class="glass reveal md:col-span-2 md:row-span-2 p-8 sm:p-12 flex flex-col justify-between min-h-[340px]">
+          <i data-lucide="hourglass" class="w-7 h-7 text-amber-400" style="stroke-width:1.3"></i>
+          <div>
+            <!-- [PLACEHOLDER: брой години – смени data-to="5"] -->
+            <div class="font-display tight font-bold text-[96px] sm:text-[150px] leading-none gradient-text"><span class="counter" data-to="5">0</span></div>
+            <p class="font-display text-xl sm:text-2xl text-cream/90 mt-3 max-w-md tight">години приятелство, доверие и рамо в трудни моменти.</p>
+            <p class="text-mist mt-3 max-w-md">Ти държиш фронта. Когато наоколо е хаос, ти си спокойствието.</p>
+          </div>
+        </article>
+
+        <!-- Карта 2: Винаги насреща -->
+        <article class="glass reveal p-8 flex flex-col gap-4 min-h-[220px]" style="--d:.1s">
+          <i data-lucide="hand-heart" class="w-7 h-7 text-coral" style="stroke-width:1.3"></i>
+          <h4 class="font-display tight font-semibold text-2xl">Винаги насреща</h4>
+          <p class="text-mist leading-relaxed">Спокоен, когато другите се паникьосват. Помага на всеки, без да чака нищо в замяна. Просто защото е такъв.</p>
+        </article>
+
+        <!-- Карта 3: кафета -->
+        <article class="glass reveal p-8 flex flex-col gap-3 min-h-[220px]" style="--d:.2s">
+          <i data-lucide="coffee" class="w-7 h-7 text-amber-400" style="stroke-width:1.3"></i>
+          <!-- [PLACEHOLDER: брой кафета – смени data-to="1000"] -->
+          <div class="font-display tight font-bold text-5xl gradient-text"><span class="counter" data-to="1000">0</span>+</div>
+          <p class="text-mist leading-relaxed">споделени кафета, разговори и смях, които направиха работата ни по-човешка.</p>
+        </article>
+
+        <!-- Карта 4 (широка): Златните правила -->
+        <article class="glass reveal md:col-span-3 p-8 sm:p-12" style="--d:.1s">
+          <div class="flex items-center gap-3 text-amber-400/90">
+            <i data-lucide="sparkles" class="w-5 h-5" style="stroke-width:1.4"></i>
+            <span class="text-xs tracking-[.3em] uppercase font-medium">Златните правила на Бати Венко</span>
+          </div>
+          <div class="relative mt-8 min-h-[150px] sm:min-h-[130px]" id="quotes">
+            <!-- [PLACEHOLDER: репликите – добави/смени .quote блоковете] -->
+            <figure class="quote on">
+              <blockquote class="font-display tight font-semibold text-3xl sm:text-5xl leading-tight">„От всичкото ной хубууту.“</blockquote>
+              <figcaption class="text-mist mt-4">Култова реплика. Казва всичко, което трябва да се каже.</figcaption>
+            </figure>
+            <figure class="quote">
+              <blockquote class="font-display tight font-semibold text-3xl sm:text-5xl leading-tight">„Дайте Дидо стой.“</blockquote>
+              <figcaption class="text-mist mt-4">Който знае – знае. Който не знае – ще научи.</figcaption>
+            </figure>
+            <figure class="quote">
+              <blockquote class="font-display tight font-semibold text-3xl sm:text-5xl leading-tight">Първо спокойствие. После всичко останало.</blockquote>
+              <figcaption class="text-mist mt-4">Правило, което ни научи без думи.</figcaption>
+            </figure>
+            <figure class="quote">
+              <blockquote class="font-display tight font-semibold text-3xl sm:text-5xl leading-tight">Излез и се забавлявай. Сцената ще те усети.</blockquote>
+              <figcaption class="text-mist mt-4">Така танцуваше на бурето. Така ни научи и нас.</figcaption>
+            </figure>
+          </div>
+          <button class="glass-btn mt-8" id="nextQuote" type="button">Следваща мъдрост <i data-lucide="arrow-right"></i></button>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       3. НАШИТЕ МОМЕНТИ
+       ============================================================ -->
+  <section id="moments" class="relative px-4 py-24 sm:py-32">
+    <div class="max-w-6xl mx-auto">
+      <p class="reveal text-amber-400/80 text-xs tracking-[.3em] uppercase font-medium">Спомени</p>
+      <h3 class="reveal font-display tight font-semibold text-4xl sm:text-6xl mt-3" style="--d:.1s">Нашите моменти.</h3>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 mt-12">
+        <!-- [PLACEHOLDER: снимки и надписи на моментите] -->
+        <figure class="moment reveal glass !rounded-[24px] overflow-hidden">
+          <div class="overflow-hidden aspect-[4/3]"><img src="assets/photos/01.jpg" alt="Тракийска картина с бурето" class="w-full h-full object-cover" loading="lazy"></div>
+          <figcaption class="p-6"><p class="font-display tight font-semibold text-xl">Бурето</p><p class="text-mist mt-1">Тракийската картина. Емоцията, заради която исках да танцувам.</p></figcaption>
+        </figure>
+        <figure class="moment reveal glass !rounded-[24px] overflow-hidden sm:mt-16" style="--d:.15s">
+          <div class="overflow-hidden aspect-[4/3]"><img src="assets/photos/06.jpg" alt="Жеравна" class="w-full h-full object-cover" loading="lazy"></div>
+          <figcaption class="p-6"><p class="font-display tight font-semibold text-xl">Жеравна</p><p class="text-mist mt-1">Там, където се чувствах на сигурно. Защото ти беше до мен.</p></figcaption>
+        </figure>
+        <figure class="moment reveal glass !rounded-[24px] overflow-hidden">
+          <div class="overflow-hidden aspect-[4/3]"><img src="assets/photos/08.jpg" alt="Заедно на сцената" class="w-full h-full object-cover" loading="lazy"></div>
+          <figcaption class="p-6"><p class="font-display tight font-semibold text-xl">Заедно, нагоре</p><p class="text-mist mt-1">Един държи, другите се качват. Знаем кой беше основата.</p></figcaption>
+        </figure>
+        <figure class="moment reveal glass !rounded-[24px] overflow-hidden sm:mt-16" style="--d:.15s">
+          <div class="overflow-hidden aspect-[4/3]"><img src="assets/photos/14.jpg" alt="На масата с колегите" class="w-full h-full object-cover" loading="lazy"></div>
+          <figcaption class="p-6"><p class="font-display tight font-semibold text-xl">Масата</p><p class="text-mist mt-1">Където винаги има място. И винаги ще има.</p></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       4. ПРИЯТЕЛСКА ПОДКРЕПА
+       ============================================================ -->
+  <section id="support" class="relative px-4 py-24 sm:py-32">
+    <div class="max-w-5xl mx-auto text-center">
+      <p class="reveal text-amber-400/80 text-xs tracking-[.3em] uppercase font-medium">За всеки случай</p>
+      <h3 class="reveal font-display tight font-semibold text-4xl sm:text-6xl mt-3" style="--d:.1s">Приятелска подкрепа.</h3>
+      <p class="reveal text-mist mt-5 max-w-xl mx-auto" style="--d:.2s">Не е за сега. Запази го за после.</p>
+
+      <div class="grid md:grid-cols-2 gap-6 mt-14 text-left">
+        <!-- Бутон 1: сърца -->
+        <div class="glass reveal p-8 sm:p-10 flex flex-col items-center text-center">
+          <i data-lucide="heart-handshake" class="w-9 h-9 text-coral" style="stroke-width:1.2"></i>
+          <button class="warm-btn mt-6" id="heartBtn" type="button"><i data-lucide="heart"></i>Натисни, когато ти дотежи или ти липсваме</button>
+          <div class="soft-open w-full" id="heartCard">
+            <div>
+              <div class="mt-8 p-6 rounded-2xl border border-amber-300/20 bg-amber-200/[.04] text-left">
+                <!-- [PLACEHOLDER: текст на картата за подкрепа] -->
+                <p class="font-serif text-lg leading-relaxed text-cream/90">Където и да си, каквото и да става, знай едно: има кой да ти вдигне. Тук винаги ще има място за теб на масата, кафе, което те чака, и хора, които те обичат.</p>
+                <p class="font-hand text-2xl text-amber-300 mt-4">Не си сам, батко.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Бутон 2: Златна карта -->
+        <div class="glass reveal p-8 sm:p-10 flex flex-col items-center" style="--d:.15s">
+          <div class="pass-scene w-full max-w-[380px]">
+            <div class="pass" id="pass">
+              <div class="pass-face pass-front">
+                <button class="warm-btn ghost" id="passBtn" type="button"><i data-lucide="credit-card"></i>Златна карта за подкрепа (24/7)</button>
+              </div>
+              <div class="pass-face pass-back p-5 sm:p-6 flex flex-col justify-between">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <p class="text-[10px] tracking-[.3em] uppercase opacity-70 font-semibold">Златна карта</p>
+                    <p class="font-display tight font-bold text-xl sm:text-2xl mt-1">БАТИ ВЕНКО</p>
+                  </div>
+                  <i data-lucide="infinity" class="w-7 h-7" style="stroke-width:1.6"></i>
+                </div>
+                <ul class="text-[12px] sm:text-[13px] font-medium space-y-1">
+                  <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5"></i>Безусловна подкрепа</li>
+                  <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5"></i>Почерпка по всяко време</li>
+                  <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5"></i>Приятел на едно обаждане разстояние</li>
+                </ul>
+                <div class="flex items-end justify-between text-[10px] tracking-[.18em] uppercase font-semibold">
+                  <span>Валидност: ЗАВИНАГИ</span><span class="opacity-70">24/7</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="text-mist text-xs mt-5 hover:text-cream transition" id="passBack" type="button">Обърни картата</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       5. ПИСМОТО (думите на Марто)
+       ============================================================ -->
+  <section id="letter" class="relative px-4 pt-24 sm:pt-36 pb-24">
+    <div class="max-w-[680px] mx-auto">
+      <p class="reveal text-amber-400/80 text-xs tracking-[.3em] uppercase font-medium text-center">Едно писмо</p>
+      <h3 class="reveal font-display tight font-semibold text-4xl sm:text-6xl mt-3 text-center" style="--d:.1s">Едно искрено благодаря.</h3>
+      <div class="reveal w-10 h-px bg-amber-400/50 mx-auto my-14" style="--d:.2s"></div>
+
+      <article class="letter">
+        <!-- [PLACEHOLDER: текстът на писмото] -->
+        <p class="reveal lead">Венко, искам да ти споделя няколко неща. Ще започна от самото начало.</p>
+        <p class="reveal">Когато реших, че искам да бъда танцьор и да превърна това в моя професия, видях теб. Беше на концерт в Бургас и се играеше „Това е България“. В тракийската картина ти беше качен на бурето. Тогава видях тази емоция, наслада и чувство. От тогава си казах, че искам да приличам и да танцувам като теб.</p>
+        <p class="reveal">Тогава не знаех името ти, не знаех кой си и какъв си. Но винаги в съзнанието ми излизаш ти, като чуя „Българе“.</p>
+        <p class="reveal">Реших се да се явя на кастинг. Преди да изляза пред вас, си представях точно теб от концерта, на бурето. Изпълних се с емоция и излязох да се забавлявам. Всичко вървеше добре до един момент, в който те видях насълзен. За мен вече нищо нямаше значение. Аз бях доволен. Човекът, който е моя идол, ме оцени.</p>
+        <p class="reveal">И после разговорът, който имахме с теб… Леле. Беше нещото, което ме надъха. След този момент ти не беше просто моят идол. Ти се превърна в човека, на когото имам най-голямо доверие. Човека, за когото аз ще обърна света на 360 градуса.</p>
+        <p class="reveal">На Жеравна аз се чувствах много добре. Защото чувствах твоята подкрепа и закрила.</p>
+        <p class="reveal">Ти си невероятен човек. Не случайно те наричам Бати Венко. Наричам те така, защото съм те приел като батко.</p>
+        <p class="reveal">Не знам защо реши точно на мен да ми подадеш ръка. Не знам с какво съм те спечелил и какво си видял в мен. Но ти благодаря.</p>
+        <div class="thanks reveal">
+          <p>Благодаря ти, че си част от моя живот.</p>
+          <p>Благодаря ти за подкрепата.</p>
+          <p>Благодаря ти за доверието.</p>
+          <p>Благодаря ти за вярата в мен.</p>
+          <p>Благодаря ти, че си до мен.</p>
+          <p>Благодаря ти, че мога да разчитам на теб.</p>
+          <p class="!text-amber-200">Благодаря.</p>
+        </div>
+        <p class="reveal">И знай, че където и да те отведе животът, винаги ще бъда насреща. За помощ, за подкрепа или просто да си поговорим.</p>
+        <p class="reveal font-display tight !font-semibold !text-2xl sm:!text-3xl !leading-snug !text-cream text-center !mt-14">Защото ти си просто<br><span class="gradient-text">Бати Венко</span> <span class="inline-block" aria-hidden="true">❤️</span></p>
+      </article>
+
+      <!-- Подпис – [PLACEHOLDER: име] -->
+      <div class="sig reveal flex flex-col items-center mt-10" id="sig">
+        <p class="text-mist text-sm">С обич,</p>
+        <svg viewBox="0 0 360 130" class="w-[240px] sm:w-[300px]" role="img" aria-label="Марто">
+          <text x="50%" y="95" text-anchor="middle" class="sig-text">Марто</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       6. ФУТЪР
+       ============================================================ -->
+  <footer class="px-4 pt-10 pb-28 text-center border-t border-white/5">
+    <p class="font-display tight text-lg text-cream/70">„От всичкото ной хубууту.“</p>
+    <!-- [PLACEHOLDER: име и година] -->
+    <p class="text-mist/70 text-xs mt-4">Създадено с обич, уважение и благодарност от Марто • 2026</p>
+    <button class="glass-btn mt-8" id="replay" type="button"><i data-lucide="rotate-ccw"></i>Пусни отново завесата</button>
+  </footer>
+</main>
+
+<script>
+/* ============================================================
+   НАСТРОЙКИ НА СЛАЙДШОУТО
+   Реда, файловете и надписите можеш да промениш тук.
+   type: 'title' (текстов кадър), 'photo' или 'video'
+   ============================================================ */
+const SHOW = [
+  { type: 'title', big: 'Бати Венко', small: 'Едно благодаря, в снимки', dur: 5000 },
+  { type: 'photo', src: 'assets/photos/01.jpg' },
+  { type: 'photo', src: 'assets/photos/02.jpg' },
+  { type: 'photo', src: 'assets/photos/03.jpg' },
+  { type: 'photo', src: 'assets/photos/04.jpg' },
+  { type: 'video', src: 'assets/video/clip1.mp4' },
+  { type: 'photo', src: 'assets/photos/05.jpg' },
+  { type: 'photo', src: 'assets/photos/06.jpg' },
+  { type: 'photo', src: 'assets/photos/07.jpg' },
+  { type: 'photo', src: 'assets/photos/08.jpg' },
+  { type: 'title', big: 'Дайте Дидо стой.', small: '', dur: 3800 },
+  { type: 'video', src: 'assets/video/backstage.mp4', max: 24000 },
+  { type: 'photo', src: 'assets/photos/09.jpg' },
+  { type: 'photo', src: 'assets/photos/10.jpg' },
+  { type: 'photo', src: 'assets/photos/11.jpg' },
+  { type: 'video', src: 'assets/video/clip2.mp4' },
+  { type: 'photo', src: 'assets/photos/12.jpg' },
+  { type: 'photo', src: 'assets/photos/13.jpg' },
+  { type: 'photo', src: 'assets/photos/14.jpg' },
+  { type: 'photo', src: 'assets/photos/15.jpg' },
+  { type: 'title', big: 'От всичкото ной хубууту.', small: 'Благодаря ти, батко.', dur: 5500 }
+];
+const PHOTO_MS = 5200;          // колко дълго стои една снимка
+const AUTO_SCROLL_PX_S = 46;    // скорост на авто-скрола (px/сек)
+const LETTER_SCROLL_PX_S = 22;  // по-бавно, докато се чете писмото
+const MUSIC_VOLUME = 0.85;
+</script>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = s => document.querySelector(s);
+  const stage = $('#stage'), show = $('#show'), bar = $('#showBar');
+  const music = $('#music'), rope = $('#rope'), ropeLine = $('#ropeLine');
+  const icons = () => window.lucide && lucide.createIcons();
+  icons();
+
+  /* ---------- Звук ---------- */
+  function fade(to, ms) {
+    const from = music.volume, t0 = performance.now();
+    return new Promise(res => {
+      (function step(t) {
+        const k = Math.min(1, (t - t0) / ms);
+        music.volume = Math.max(0, Math.min(1, from + (to - from) * k));
+        k < 1 ? requestAnimationFrame(step) : res();
+      })(t0);
+    });
+  }
+  function setMuteIcons() {
+    const name = music.muted ? 'volume-x' : 'volume-2';
+    ['#muteBtn', '#soundFab'].forEach(id => { $(id).innerHTML = `<i data-lucide="${name}"></i>`; });
+    icons();
+  }
+  ['#muteBtn', '#soundFab'].forEach(id => $(id).addEventListener('click', () => { music.muted = !music.muted; setMuteIcons(); }));
+
+  /* ---------- Слайдшоу ---------- */
+  const slides = SHOW.map(item => {
+    const el = document.createElement('div');
+    el.className = 'slide' + (item.type === 'title' ? ' title-card' : '');
+    if (item.type === 'title') {
+      el.innerHTML = `<div class="fg"><p class="font-display tight font-semibold text-4xl sm:text-7xl gradient-text px-4">${item.big}</p>${item.small ? `<p class="font-serif italic text-amber-100/60 mt-5 text-lg sm:text-xl">${item.small}</p>` : ''}</div>`;
+    } else if (item.type === 'photo') {
+      el.innerHTML = `<div class="bg" style="background-image:url('${item.src}')"></div><div class="fg"><img alt="" decoding="async" src="${item.src}"></div><div class="vignette"></div>`;
+      el.style.setProperty('--dur', (PHOTO_MS + 1600) + 'ms');
+    } else {
+      el.innerHTML = `<div class="bg" style="background:#000"></div><div class="fg"><video muted playsinline preload="auto" src="${item.src}"></video></div><div class="vignette"></div>`;
+    }
+    show.appendChild(el);
+    return el;
+  });
+
+  let idx = -1, timer = null, running = false, finished = false;
+  const totalEst = SHOW.reduce((a, s) => a + (s.dur || (s.type === 'photo' ? PHOTO_MS : (s.max || 9000))), 0);
+  let elapsed = 0, tickStart = 0, curDur = 0;
+
+  function next() {
+    clearTimeout(timer);
+    if (idx >= 0) {
+      slides[idx].classList.remove('on');
+      const v = slides[idx].querySelector('video'); if (v) setTimeout(() => v.pause(), 1400);
+      elapsed += curDur;
+    }
+    idx++;
+    if (idx >= slides.length) return endShow();
+    const item = SHOW[idx], el = slides[idx];
+    // рестарт на Ken Burns анимацията
+    const img = el.querySelector('img'); if (img) { img.style.animation = 'none'; img.offsetHeight; img.style.animation = ''; }
+    el.classList.add('on');
+    tickStart = performance.now();
+    if (item.type === 'video') {
+      const v = el.querySelector('video');
+      v.currentTime = 0;
+      const p = v.play(); if (p) p.catch(() => {});
+      const len = (isFinite(v.duration) && v.duration ? v.duration * 1000 : 8000);
+      curDur = Math.min(item.max || Infinity, len - 300);
+      v.onended = () => next();
+      timer = setTimeout(next, curDur);
+    } else {
+      curDur = item.dur || PHOTO_MS;
+      timer = setTimeout(next, curDur);
+    }
+  }
+  (function progress() {
+    if (running && !finished) {
+      const k = Math.min(1, (elapsed + Math.min(curDur, performance.now() - tickStart)) / totalEst);
+      bar.style.width = (k * 100) + '%';
+    }
+    requestAnimationFrame(progress);
+  })();
+
+  /* ---------- Отваряне на завесата ---------- */
+  function openCurtain() {
+    if (running) return;
+    running = true; finished = false; idx = -1; elapsed = 0;
+    rope.classList.add('pulled');
+    music.currentTime = 0; music.volume = 0;
+    const p = music.play(); if (p) p.catch(() => {});
+    fade(MUSIC_VOLUME, 3500);
+    stage.classList.add('open');
+    setTimeout(next, reduce ? 300 : 2200);
+  }
+
+  function endShow() {
+    if (finished) return;
+    finished = true; clearTimeout(timer);
+    bar.style.width = '100%';
+    slides.forEach(s => { s.classList.remove('on'); const v = s.querySelector('video'); if (v) v.pause(); });
+    window.scrollTo(0, 0);
+    document.body.classList.remove('locked');
+    stage.classList.add('gone');
+    $('#soundFab').classList.add('show');
+    fade(MUSIC_VOLUME * 0.6, 3000);
+    setTimeout(revealInView, 200);
+    if (!reduce) setTimeout(startAutoScroll, 2600);
+  }
+  $('#skipBtn').addEventListener('click', endShow);
+
+  /* Дърпане на въжето: влачене надолу или клик/Enter */
+  let dragY = null, pulledBy = 0;
+  rope.addEventListener('pointerdown', e => { dragY = e.clientY; pulledBy = 0; rope.setPointerCapture(e.pointerId); ropeLine.style.transition = 'none'; });
+  rope.addEventListener('pointermove', e => {
+    if (dragY === null) return;
+    pulledBy = Math.max(0, Math.min(160, e.clientY - dragY));
+    rope.style.transform = `translateY(${pulledBy}px)`;
+  });
+  function release() {
+    if (dragY === null) return;
+    dragY = null;
+    rope.style.transition = 'transform .9s cubic-bezier(.34,1.56,.64,1)';
+    // кратко „дръпване“, дори при обикновен клик
+    if (pulledBy < 40) { rope.style.transform = 'translateY(90px)'; setTimeout(() => rope.style.transform = 'translateY(0)', 220); }
+    else rope.style.transform = 'translateY(0)';
+    setTimeout(openCurtain, 260);
+  }
+  rope.addEventListener('pointerup', release);
+  rope.addEventListener('pointercancel', release);
+  rope.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dragY = 0; pulledBy = 0; release(); } });
+
+  /* ---------- Авто-скрол надолу ---------- */
+  let autoOn = false, lastT = 0, acc = 0;
+  const letter = $('#letter');
+  function startAutoScroll() { autoOn = true; lastT = performance.now(); acc = window.scrollY; requestAnimationFrame(autoStep); }
+  function stopAutoScroll() { autoOn = false; }
+  function autoStep(t) {
+    if (!autoOn) return;
+    const dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
+    const inLetter = letter.getBoundingClientRect().top < innerHeight * 0.35;
+    acc += (inLetter ? LETTER_SCROLL_PX_S : AUTO_SCROLL_PX_S) * dt;
+    window.scrollTo(0, acc);
+    const max = document.documentElement.scrollHeight - innerHeight;
+    if (acc >= max - 1) return stopAutoScroll();
+    requestAnimationFrame(autoStep);
+  }
+  // Ако човек сам почне да скролва или натиска – авто-скролът спира
+  ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(ev => addEventListener(ev, e => { if (autoOn && !e.target.closest?.('#soundFab')) stopAutoScroll(); }, { passive: true }));
+
+  /* ---------- Плавно появяване ---------- */
+  const io = new IntersectionObserver(entries => entries.forEach(en => {
+    if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+  }), { threshold: 0.15, rootMargin: '0px 0px -5% 0px' });
+  function revealInView() { document.querySelectorAll('.reveal:not(.in)').forEach(el => io.observe(el)); }
+  // кратко застъпване между съседни елементи в писмото
+  document.querySelectorAll('.letter .reveal').forEach((el, i) => el.style.setProperty('--d', '0.05s'));
+
+  /* ---------- Броячи ---------- */
+  const cio = new IntersectionObserver(entries => entries.forEach(en => {
+    if (!en.isIntersecting) return;
+    cio.unobserve(en.target);
+    const el = en.target, to = +el.dataset.to, t0 = performance.now(), dur = reduce ? 1 : 2400;
+    (function step(t) {
+      const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 4);
+      el.textContent = Math.round(to * e).toLocaleString('bg-BG');
+      if (k < 1) requestAnimationFrame(step);
+    })(t0);
+  }), { threshold: 0.6 });
+  document.querySelectorAll('.counter').forEach(c => cio.observe(c));
+
+  /* ---------- Светлина, следваща курсора ---------- */
+  document.querySelectorAll('.glass').forEach(card => card.addEventListener('pointermove', e => {
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  }));
+
+  /* ---------- Наклон на портрета ---------- */
+  const portrait = $('#portrait');
+  if (!reduce) {
+    portrait.parentElement.addEventListener('pointermove', e => {
+      const r = portrait.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+      portrait.style.transform = `rotateY(${x * 10}deg) rotateX(${-y * 10}deg)`;
+    });
+    portrait.parentElement.addEventListener('pointerleave', () => portrait.style.transform = '');
+    addEventListener('scroll', () => {
+      const k = Math.min(1, scrollY / innerHeight);
+      portrait.parentElement.style.translate = `0 ${k * -40}px`;
+    }, { passive: true });
+  }
+
+  /* ---------- Цитати ---------- */
+  const quotes = [...document.querySelectorAll('#quotes .quote')];
+  let qi = 0;
+  $('#nextQuote').addEventListener('click', () => {
+    quotes[qi].classList.remove('on');
+    qi = (qi + 1) % quotes.length;
+    setTimeout(() => quotes[qi].classList.add('on'), 250);
+  });
+
+  /* ---------- Златна карта ---------- */
+  const pass = $('#pass');
+  $('#passBtn').addEventListener('click', () => pass.classList.add('flipped'));
+  $('#passBack').addEventListener('click', () => pass.classList.toggle('flipped'));
+
+  /* ---------- Сърца (бавни, мечтателни частици) ---------- */
+  const cv = $('#hearts'), ctx = cv.getContext('2d');
+  let parts = [], animating = false;
+  function size() { const d = devicePixelRatio || 1; cv.width = innerWidth * d; cv.height = innerHeight * d; ctx.setTransform(d, 0, 0, d, 0, 0); }
+  size(); addEventListener('resize', size);
+  function heart(x, y, s, a, hue) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s); ctx.globalAlpha = a;
+    ctx.fillStyle = `hsl(${hue} 90% 66%)`; ctx.shadowColor = `hsl(${hue} 95% 60%)`; ctx.shadowBlur = 16;
+    ctx.beginPath(); ctx.moveTo(0, 3);
+    ctx.bezierCurveTo(-10, -5, -5, -13, 0, -7); ctx.bezierCurveTo(5, -13, 10, -5, 0, 3);
+    ctx.fill(); ctx.restore();
+  }
+  function burst(fromEl) {
+    const r = fromEl.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const n = reduce ? 10 : 46;
+    for (let i = 0; i < n; i++) parts.push({
+      x: cx + (Math.random() - .5) * r.width, y: cy + (Math.random() - .5) * 20,
+      vx: (Math.random() - .5) * 0.5, vy: -(0.35 + Math.random() * 0.9),
+      s: Math.random() < .7 ? 0.7 + Math.random() * 1.1 : 0.25, life: 0, max: 260 + Math.random() * 200,
+      hue: Math.random() < .6 ? 38 + Math.random() * 12 : 350 + Math.random() * 10,
+      w: Math.random() * Math.PI * 2, spark: Math.random() < .3
+    });
+    if (!animating) { animating = true; requestAnimationFrame(loop); }
+  }
+  function loop() {
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    parts = parts.filter(p => p.life < p.max);
+    parts.forEach(p => {
+      p.life++; p.w += 0.02; p.x += p.vx + Math.sin(p.w) * 0.35; p.y += p.vy;
+      const a = Math.sin(Math.PI * p.life / p.max) * 0.9;
+      if (p.spark) { ctx.globalAlpha = a; ctx.fillStyle = '#ffd99a'; ctx.beginPath(); ctx.arc(p.x, p.y, 1.6, 0, 7); ctx.fill(); }
+      else heart(p.x, p.y, p.s, a, p.hue);
+    });
+    ctx.globalAlpha = 1;
+    if (parts.length) requestAnimationFrame(loop); else { animating = false; ctx.clearRect(0, 0, innerWidth, innerHeight); }
+  }
+  $('#heartBtn').addEventListener('click', e => { burst(e.currentTarget); $('#heartCard').classList.add('open'); });
+
+  /* ---------- Отново завесата ---------- */
+  $('#replay').addEventListener('click', () => {
+    stopAutoScroll();
+    fade(0, 800).then(() => music.pause());
+    document.body.classList.add('locked');
+    window.scrollTo(0, 0);
+    $('#soundFab').classList.remove('show');
+    bar.style.width = '0';
+    rope.classList.remove('pulled');
+    stage.classList.remove('gone');
+    stage.classList.remove('open');
+    running = false;
+  });
+})();
+</script>
+</body>
+</html>
