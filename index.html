@@ -229,6 +229,8 @@ body.locked { overflow: hidden; height: 100vh; height: 100svh; }
   display: flex; justify-content: center; opacity: 0; transition: opacity 1.2s ease;
 }
 #subs.on { opacity: 1; }
+/* скрити по време на писмото, финала и спускането на завесата */
+#subs.hush { opacity: 0 !important; }
 /* След слайдшоуто: по-малки и без тъмната лента, за да не пречат на текста */
 #subs.page-mode { padding-top: 40px; padding-bottom: max(22px, calc(env(safe-area-inset-bottom) + 22px));
   background: linear-gradient(to top, rgba(10,10,12,.7), transparent); }
@@ -318,10 +320,10 @@ body.finale #soundFab { opacity: 0; pointer-events: none; }
 /* Завесата се спуска обратно – по-бавно и над финалния текст */
 #stage.closing { background: transparent; transition: opacity 1.4s ease, visibility 0s; }
 #stage.closing #show, #stage.closing .show-bar, #stage.closing .show-ui { display: none; }
-#stage.closing .curtain { transition: transform 6s cubic-bezier(.45,0,.2,1), filter 6s ease; }
-#stage.closing .valance, #stage.closing .valance-trim { transition: transform 4s cubic-bezier(.45,0,.2,1) 1.5s, opacity 3s ease 2s; }
-#stage.closing .stage-title { transition: opacity 3s ease 5s, transform 3s var(--spring) 5s; }
-#stage.closing .rope-wrap { transition: opacity 2s ease 6s; }
+#stage.closing .curtain { transition: transform 11s cubic-bezier(.4,0,.25,1), filter 11s ease; }
+#stage.closing .valance, #stage.closing .valance-trim { transition: transform 7s cubic-bezier(.4,0,.25,1) 2.5s, opacity 5s ease 3.5s; }
+#stage.closing .stage-title { transition: opacity 4s ease 9.5s, transform 4s var(--spring) 9.5s; }
+#stage.closing .rope-wrap { transition: opacity 3s ease 11s; }
 
 /* Плаващ бутон за звук (след слайдшоуто) */
 #soundFab { position: fixed; z-index: 50; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); opacity: 0; pointer-events: none; transition: opacity .8s; }
@@ -535,8 +537,8 @@ body.finale #soundFab { opacity: 0; pointer-events: none; }
         <article class="glass reveal md:col-span-2 md:row-span-2 p-8 sm:p-12 flex flex-col justify-between min-h-[340px]">
           <i data-lucide="hourglass" class="w-7 h-7 text-amber-400" style="stroke-width:1.3"></i>
           <div>
-            <!-- [PLACEHOLDER: брой години – смени data-to="5"] -->
-            <div class="font-display tight font-bold text-[96px] sm:text-[150px] leading-none gradient-text"><span class="counter" data-to="5">0</span></div>
+            <!-- [PLACEHOLDER: брой години – смени data-to="2"] -->
+            <div class="font-display tight font-bold text-[96px] sm:text-[150px] leading-none gradient-text"><span class="counter" data-to="2">0</span></div>
             <p class="font-display text-xl sm:text-2xl text-cream/90 mt-3 max-w-md tight">години приятелство, доверие и рамо в трудни моменти.</p>
             <p class="text-mist mt-3 max-w-md">Ти държиш фронта. Когато наоколо е хаос, ти си спокойствието.</p>
           </div>
@@ -1063,7 +1065,7 @@ const MUSIC_VOLUME = 0.85;
       stage.classList.remove('closing');
       running = false; finaleOn = false; closing = false;
       fade(0, 9000).then(() => { if (!running) { audA.pause(); audB.pause(); } });
-    }, 8000);
+    }, 14500);
   }
 
   const CHORUS_RE = /got you,? brother/i;
@@ -1084,7 +1086,7 @@ const MUSIC_VOLUME = 0.85;
       if (chorus) {
         // завесата се спуска точно на „I've got you, brother“
         if (finaleOn && !closing && performance.now() >= finaleReadyAt) closeCurtain();
-        if (running && !finaleOn && !closing) popBrother();
+        if (!subsBox.classList.contains('hush')) popBrother();
       }
       subLine.innerHTML = esc(text).split(' ').map((w, i) => chorus && /brother/i.test(w)
         ? `<span class="w bro" style="--i:${i}">${w.replace(/[^A-Za-z]+$/, '')}</span><span class="w" style="--i:${i}">${(w.match(/[^A-Za-z]+$/) || [''])[0]} </span>`
@@ -1094,6 +1096,9 @@ const MUSIC_VOLUME = 0.85;
   }
   (function lyricLoop() {
     if (!music.paused && !xfading && music.currentTime >= LOOP_XFADE_AT) crossfadeLoop();
+    // субтитрите изчезват, щом започне писмото, и не се показват на финала и при завесата
+    const hush = !running || finaleOn || closing || (finished && document.getElementById('letter').getBoundingClientRect().top < innerHeight * 0.75);
+    subsBox.classList.toggle('hush', hush);
     if (LYRICS.length && !music.paused) {
       subsBox.classList.add('on');
       const t = music.currentTime;
