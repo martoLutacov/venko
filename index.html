@@ -848,7 +848,13 @@ const LOOP_XFADE_AT = 199.0;   // от коя секунда започва пр
 const LOOP_XFADE_MS = 1500;
 /* Финал: колко поне да стои само „Защото ти си просто Бати Венко“,
    преди завесата да се спусне на следващото „I've got you, brother“ */
-const FINALE_HOLD_MS = 6000;
+const FINALE_HOLD_MS = 5000;
+/* Ако до следващото „I've got you, brother“ има твърде много време, музиката
+   плавно преминава тук (сек.), така че припевът да дойде след ~8 сек.
+   49.0 = „And if you would drown at sea…“, после 56.9 „I've got you, brother“. */
+const FINALE_JUMP_TO = 49.0;
+const FINALE_MAX_WAIT = 12;     // сек.: ако припевът е по-далеч от това, прескачаме
+const CURTAIN_CLOSE_MS = 11000; // колкото трае спускането на завесата (и заглъхването на музиката)
 
 /* ПРЕВОД НА БЪЛГАРСКИ (по-малкият ред под субтитрите)
    По един ред за всеки НЕпразен ред от LYRICS_LRC, в същия ред.
@@ -1023,15 +1029,17 @@ const MUSIC_VOLUME = 0.85;
   const esc = t => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   /* ---------- Безкрайна песен: в края преминава плавно обратно към LOOP_TO ---------- */
   let xfading = false;
-  function crossfadeLoop() {
+  function crossfadeLoop() { crossfadeTo(LOOP_TO, LOOP_XFADE_MS); }
+  function crossfadeTo(toTime, ms) {
+    if (xfading) return;
     xfading = true;
     const old = music, nxt = old === audA ? audB : audA, vol = old.volume;
-    nxt.muted = old.muted; nxt.currentTime = LOOP_TO; nxt.volume = 0;
+    nxt.muted = old.muted; nxt.currentTime = toTime; nxt.volume = 0;
     const p = nxt.play(); if (p) p.catch(() => {});
     music = nxt; curLyric = -1;
     const t0 = performance.now();
     (function step(t) {
-      const k = Math.min(1, (t - t0) / LOOP_XFADE_MS);
+      const k = Math.min(1, (t - t0) / ms);
       old.volume = vol * (1 - k); nxt.volume = Math.max(nxt.volume, vol * k);
       if (k < 1) requestAnimationFrame(step); else { old.pause(); xfading = false; }
     })(t0);
@@ -1044,6 +1052,10 @@ const MUSIC_VOLUME = 0.85;
   function startFinale() {
     if (finaleOn || !finished) return;
     finaleOn = true; finaleReadyAt = performance.now() + FINALE_HOLD_MS;
+    // колко остава до следващото „I've got you, brother“ (след минималното задържане)
+    const t = music.currentTime, holdS = FINALE_HOLD_MS / 1000;
+    const nextChorus = LYRICS.find(l => CHORUS_RE.test(l.text) && l.t >= t + holdS);
+    if (!nextChorus || nextChorus.t - t > FINALE_MAX_WAIT) crossfadeTo(FINALE_JUMP_TO, 2500);
     document.body.classList.add('finale');
     $('#finale').classList.add('on');
   }
@@ -1053,6 +1065,8 @@ const MUSIC_VOLUME = 0.85;
     stage.classList.add('closing');
     stage.classList.remove('gone');
     requestAnimationFrame(() => requestAnimationFrame(() => { stage.classList.remove('open'); rope.classList.remove('pulled'); }));
+    // музиката заглъхва заедно със завесата
+    fade(0, CURTAIN_CLOSE_MS).then(() => { if (closing || !running) { audA.pause(); audB.pause(); } });
     setTimeout(() => {
       // завесата е спусната: връщаме страницата в началото, музиката бавно заглъхва
       $('#finale').classList.remove('on');
@@ -1064,8 +1078,7 @@ const MUSIC_VOLUME = 0.85;
       subsBox.classList.remove('page-mode');
       stage.classList.remove('closing');
       running = false; finaleOn = false; closing = false;
-      fade(0, 9000).then(() => { if (!running) { audA.pause(); audB.pause(); } });
-    }, 14500);
+    }, CURTAIN_CLOSE_MS + 1500);
   }
 
   const CHORUS_RE = /got you,? brother/i;
@@ -1075,6 +1088,8 @@ const MUSIC_VOLUME = 0.85;
     popEl.classList.remove('show'); void popEl.offsetWidth; popEl.classList.add('show');
   }
   function setLyric(text, bg) {
+    // завесата се спуска точно на „I've got you, brother“ (без закъснение от анимацията)
+    if (text && CHORUS_RE.test(text) && finaleOn && !closing && performance.now() >= finaleReadyAt) closeCurtain();
     subBg.classList.remove('on');
     if (!text) { subLine.classList.add('out'); return; }
     const put = () => {
@@ -1084,8 +1099,6 @@ const MUSIC_VOLUME = 0.85;
       subBg.innerHTML = chorus ? esc(bg || '').replace(/(брат(?:ко|е)?)/gi, '<span class="bro">$1</span>') : esc(bg || '');
       if (bg) subBg.classList.add('on');
       if (chorus) {
-        // завесата се спуска точно на „I've got you, brother“
-        if (finaleOn && !closing && performance.now() >= finaleReadyAt) closeCurtain();
         if (!subsBox.classList.contains('hush')) popBrother();
       }
       subLine.innerHTML = esc(text).split(' ').map((w, i) => chorus && /brother/i.test(w)
