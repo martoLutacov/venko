@@ -233,6 +233,17 @@ body.locked { overflow: hidden; height: 100vh; height: 100svh; }
 #subs.page-mode { padding-top: 40px; padding-bottom: max(22px, calc(env(safe-area-inset-bottom) + 22px));
   background: linear-gradient(to top, rgba(10,10,12,.7), transparent); }
 #subs.page-mode #subLine { font-size: clamp(13px, 1.5vw, 19px); }
+#subs { flex-direction: column; align-items: center; }
+/* Превод на български – по-малък ред под субтитрите */
+#subBg {
+  max-width: 900px; margin: 8px 0 0; text-align: center; min-height: 1.4em;
+  font-family: Manrope, Inter, sans-serif; font-weight: 500; font-style: italic;
+  font-size: clamp(13px, 1.35vw, 18px); line-height: 1.35; color: rgba(245,245,247,.82);
+  text-shadow: 0 1px 2px rgba(0,0,0,.9), 0 0 12px rgba(0,0,0,.6);
+  opacity: 0; transform: translateY(6px); transition: opacity .45s ease, transform .6s var(--spring);
+}
+#subBg.on { opacity: 1; transform: none; transition-delay: .25s; }
+#subs.page-mode #subBg { font-size: clamp(11px, 1.1vw, 14px); margin-top: 4px; }
 @media (max-width: 640px) { #subs.page-mode { padding-right: 70px; } }
 #subLine {
   max-width: 1100px; margin: 0; text-align: center;
@@ -406,7 +417,7 @@ body.locked { overflow: hidden; height: 100vh; height: 100svh; }
 <audio id="music" src="assets/audio/music.mp3" preload="auto" loop></audio>
 
 <!-- Субтитри с текста на песента (виж LYRICS_LRC в настройките по-долу) -->
-<div id="subs" aria-hidden="true"><p id="subLine"></p></div>
+<div id="subs" aria-hidden="true"><p id="subLine"></p><p id="subBg"></p></div>
 
 <canvas id="hearts"></canvas>
 <button class="glass-btn" id="soundFab" type="button" aria-label="Звук"><i data-lucide="volume-2"></i></button>
@@ -763,6 +774,12 @@ const LYRICS_LRC = `
 [03:20.29]
 `;
 const LYRICS_OFFSET = 0;
+
+/* ПРЕВОД НА БЪЛГАРСКИ (по-малкият ред под субтитрите)
+   По един ред за всеки НЕпразен ред от LYRICS_LRC, в същия ред.
+   Празен ред тук = няма превод за този ред. */
+const LYRICS_BG = `
+`;
 const AUTO_SCROLL_PX_S = 46;    // скорост на авто-скрола (px/сек)
 const LETTER_SCROLL_PX_S = 22;  // по-бавно, докато се чете писмото
 const MUSIC_VOLUME = 0.85;
@@ -870,12 +887,20 @@ const MUSIC_VOLUME = 0.85;
     const m = l.match(/^\s*\[(\d+):(\d+(?:[.:]\d+)?)\](.*)$/);
     return m ? { t: +m[1] * 60 + parseFloat(m[2].replace(':', '.')) + LYRICS_OFFSET, text: m[3].trim() } : null;
   }).filter(Boolean).sort((a, b) => a.t - b.t);
+  // свързваме превода с непразните редове по реда им
+  const BG = LYRICS_BG.replace(/^\n/, '').split('\n');
+  let bgI = 0;
+  LYRICS.forEach(l => { if (l.text) l.bg = (BG[bgI++] || '').trim(); });
+  const subBg = $('#subBg');
   let curLyric = -1;
   const esc = t => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  function setLyric(text) {
+  function setLyric(text, bg) {
+    subBg.classList.remove('on');
     if (!text) { subLine.classList.add('out'); return; }
     const put = () => {
       subLine.classList.remove('out');
+      subBg.textContent = bg || '';
+      if (bg) subBg.classList.add('on');
       subLine.innerHTML = esc(text).split(' ').map((w, i) => `<span class="w" style="--i:${i}">${w} </span>`).join('');
     };
     if (subLine.innerHTML) { subLine.classList.add('out'); setTimeout(put, 260); } else put();
@@ -886,7 +911,7 @@ const MUSIC_VOLUME = 0.85;
       const t = music.currentTime;
       let k = -1;
       for (let i = 0; i < LYRICS.length && LYRICS[i].t <= t; i++) k = i;
-      if (k !== curLyric) { curLyric = k; setLyric(k >= 0 ? LYRICS[k].text : ''); }
+      if (k !== curLyric) { curLyric = k; setLyric(k >= 0 ? LYRICS[k].text : '', k >= 0 ? LYRICS[k].bg : ''); }
     } else if (music.paused) { subsBox.classList.remove('on'); }
     requestAnimationFrame(lyricLoop);
   })();
@@ -1053,7 +1078,7 @@ const MUSIC_VOLUME = 0.85;
     stage.classList.remove('gone');
     stage.classList.remove('open');
     running = false;
-    subsBox.classList.remove('page-mode'); curLyric = -1; subLine.innerHTML = '';
+    subsBox.classList.remove('page-mode'); curLyric = -1; subLine.innerHTML = ''; subBg.textContent = ''; subBg.classList.remove('on');
   });
 })();
 </script>
