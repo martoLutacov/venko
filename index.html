@@ -13,7 +13,7 @@
      ============================================================ -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Manrope:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;1,400&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Manrope:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;1,400&family=Caveat:wght@500;700&family=Russo+One&display=swap" rel="stylesheet">
 
 <!-- Tailwind: assets/tailwind.css е готов (вграден) вариант, за да работи сайтът и без интернет.
      CDN скриптът отгоре позволява да добавяш нови Tailwind класове без build. -->
@@ -194,6 +194,9 @@ body.locked { overflow: hidden; height: 100vh; height: 100svh; }
 .slide.on { opacity: 1; }
 .slide .bg { position: absolute; inset: -40px; background-size: cover; background-position: center; filter: blur(34px) brightness(.45) saturate(1.1); transform: scale(1.1); }
 .slide .fg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 4vh 4vw; }
+/* Място отдолу за субтитрите, за да не закриват снимките */
+.slide:not(.title-card) .fg { padding-bottom: calc(4vh + 120px); }
+@media (max-width: 640px) { .slide:not(.title-card) .fg { padding-bottom: 190px; } }
 .slide img, .slide video {
   max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 14px;
   box-shadow: 0 30px 80px rgba(0,0,0,.6);
@@ -217,6 +220,37 @@ body.locked { overflow: hidden; height: 100vh; height: 100svh; }
 .glass-btn:hover { transform: translateY(-2px); background: rgba(40,34,30,.6); box-shadow: 0 8px 30px rgba(245,158,11,.15); }
 .glass-btn:active { transform: scale(.98); }
 .glass-btn svg { width: 16px; height: 16px; stroke-width: 1.5; }
+
+/* ---------- Субтитри в стил „Бързи и яростни“ ---------- */
+#subs {
+  position: absolute; z-index: 11; left: 0; right: 0; bottom: 0; pointer-events: none;
+  padding: 18vh max(16px, 6vw) max(64px, calc(env(safe-area-inset-bottom) + 64px));
+  background: linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.45) 45%, transparent 100%);
+  display: flex; justify-content: center; opacity: 0; transition: opacity 1.2s ease;
+}
+#stage.open #subs.on { opacity: 1; }
+#subLine {
+  max-width: 1100px; margin: 0; text-align: center;
+  font-family: 'Russo One', Manrope, sans-serif; text-transform: uppercase;
+  font-size: clamp(17px, 2.5vw, 34px); line-height: 1.22; letter-spacing: .01em;
+  transform: skewX(-10deg);
+}
+#subLine .w {
+  display: inline-block; white-space: pre;
+  background: linear-gradient(180deg, #ffffff 0%, #e8e8ea 38%, #9a9aa2 52%, #f6d48a 62%, #f59e0b 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 2px 0 rgba(0,0,0,.85)) drop-shadow(0 0 14px rgba(245,158,11,.35));
+  opacity: 0; transform: translateX(-46px) skewX(-18deg); 
+  animation: wIn .55s cubic-bezier(.2,1.4,.4,1) forwards; animation-delay: calc(var(--i) * 45ms);
+}
+#subLine.out .w { animation: wOut .38s cubic-bezier(.6,0,.9,.4) forwards; animation-delay: calc(var(--i) * 12ms); }
+@keyframes wIn {
+  0%   { opacity: 0; transform: translateX(-46px) skewX(-18deg); filter: blur(6px); }
+  60%  { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: none; filter: drop-shadow(0 2px 0 rgba(0,0,0,.85)) drop-shadow(0 0 14px rgba(245,158,11,.35)); }
+}
+@keyframes wOut { to { opacity: 0; transform: translateX(70px) skewX(-18deg); filter: blur(8px); } }
+@media (max-width: 640px) { #subs { padding-bottom: max(86px, calc(env(safe-area-inset-bottom) + 86px)); } }
 
 /* Плаващ бутон за звук (след слайдшоуто) */
 #soundFab { position: fixed; z-index: 50; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); opacity: 0; pointer-events: none; transition: opacity .8s; }
@@ -337,6 +371,8 @@ body.locked { overflow: hidden; height: 100vh; height: 100svh; }
   <!-- Слайдшоуто стои зад завесата и се показва, когато тя се отвори -->
   <div id="show" aria-hidden="true"></div>
   <div class="show-bar" id="showBar"></div>
+  <!-- Субтитри: текстът идва автоматично от писмото по-долу (секция #letter) -->
+  <div id="subs" aria-live="off"><p id="subLine"></p></div>
 
   <div class="curtain left"></div>
   <div class="curtain right"></div>
@@ -640,7 +676,8 @@ const SHOW = [
   { type: 'photo', src: 'assets/photos/15.jpg' },
   { type: 'title', big: 'От всикуту най-хубууту.', small: 'Благодаря ти, батко.', dur: 5500 }
 ];
-const PHOTO_MS = 5200;          // колко дълго стои една снимка
+const PHOTO_MS = 6200;          // колко дълго стои една снимка
+const SUB_CHARS_PER_SEC = 15;   // скорост на субтитрите (знаци в секунда); по-малко = по-бавно
 const AUTO_SCROLL_PX_S = 46;    // скорост на авто-скрола (px/сек)
 const LETTER_SCROLL_PX_S = 22;  // по-бавно, докато се чете писмото
 const MUSIC_VOLUME = 0.85;
@@ -740,11 +777,40 @@ const MUSIC_VOLUME = 0.85;
     fade(MUSIC_VOLUME, 3500);
     stage.classList.add('open');
     setTimeout(next, reduce ? 300 : 2200);
+    setTimeout(startSubs, (reduce ? 300 : 2200) + (SHOW[0].dur || 0) + 600);
   }
+
+  /* ---------- Субтитри от писмото ---------- */
+  const subsBox = $('#subs'), subLine = $('#subLine');
+  // Изреченията се взимат директно от писмото, така че ако го промениш, и субтитрите се сменят
+  const SUBS = (() => {
+    const out = [];
+    document.querySelectorAll('.letter > p, .letter .thanks p').forEach(p => {
+      const sentences = p.textContent.replace(/\s+/g, ' ').trim().split(/(?<=[.!?…])\s+/);
+      sentences.forEach(t => {
+        const last = out[out.length - 1];
+        if (last && (last.length < 28 || t.length < 22) && (last + ' ' + t).length < 95) out[out.length - 1] = last + ' ' + t;
+        else out.push(t);
+      });
+    });
+    return out.filter(Boolean);
+  })();
+  let subTimer = null, subI = 0;
+  function showSub() {
+    if (subI >= SUBS.length) { subLine.classList.add('out'); return; }
+    const text = SUBS[subI++];
+    subLine.classList.remove('out');
+    subLine.innerHTML = text.split(' ').map((w, i) => `<span class="w" style="--i:${i}">${w} </span>`).join('');
+    const ms = Math.max(2200, text.length / SUB_CHARS_PER_SEC * 1000);
+    subTimer = setTimeout(() => { subLine.classList.add('out'); subTimer = setTimeout(showSub, 420); }, ms);
+  }
+  function startSubs() { if (finished || !running) return; subI = 0; subsBox.classList.add('on'); showSub(); }
+  function stopSubs() { clearTimeout(subTimer); subsBox.classList.remove('on'); subLine.innerHTML = ''; }
+  window.__subsTotalMs = SUBS.reduce((a, t) => a + Math.max(2200, t.length / SUB_CHARS_PER_SEC * 1000) + 420, 0);
 
   function endShow() {
     if (finished) return;
-    finished = true; clearTimeout(timer);
+    finished = true; clearTimeout(timer); stopSubs();
     bar.style.width = '100%';
     slides.forEach(s => { s.classList.remove('on'); const v = s.querySelector('video'); if (v) v.pause(); });
     window.scrollTo(0, 0);
@@ -903,6 +969,7 @@ const MUSIC_VOLUME = 0.85;
     stage.classList.remove('gone');
     stage.classList.remove('open');
     running = false;
+    stopSubs();
   });
 })();
 </script>
