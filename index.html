@@ -1222,12 +1222,25 @@ const MUSIC_VOLUME = 0.85;
 
   /* ---------- Цитати ---------- */
   const quotes = [...document.querySelectorAll('#quotes .quote')];
-  let qi = 0;
-  $('#nextQuote').addEventListener('click', () => {
-    quotes[qi].classList.remove('on');
-    qi = (qi + 1) % quotes.length;
-    setTimeout(() => quotes[qi].classList.add('on'), 250);
-  });
+  let qi = 0, qTimer = null;
+  function showQuote(i) {
+    if (i === qi) return;
+    clearTimeout(qTimer);
+    quotes.forEach(q => q.classList.remove('on'));
+    qi = i;
+    qTimer = setTimeout(() => quotes[qi].classList.add('on'), 250);
+  }
+  $('#nextQuote').addEventListener('click', () => showQuote((qi + 1) % quotes.length));
+  // Репликите се сменят сами, докато картата минава през екрана при скрол
+  const quoteCard = $('#quotes').closest('article');
+  let lastScrollQ = 0;
+  addEventListener('scroll', () => {
+    const r = quoteCard.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > innerHeight) return;
+    const prog = Math.min(0.999, Math.max(0, (innerHeight * 0.85 - r.top) / (innerHeight * 0.85 + r.height * 0.3)));
+    const i = Math.floor(prog * quotes.length);
+    if (i !== lastScrollQ) { lastScrollQ = i; showQuote(i); }
+  }, { passive: true });
 
   /* ---------- Златна карта ---------- */
   const pass = $('#pass');
