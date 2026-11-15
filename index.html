@@ -1197,7 +1197,9 @@ const MUSIC_VOLUME = 0.85;
     acc += (inLetter ? LETTER_SCROLL_PX_S : AUTO_SCROLL_PX_S) * dt;
     window.scrollTo(0, acc);
     const max = document.documentElement.scrollHeight - innerHeight;
-    if (acc >= max - 1) { stopAutoScroll(); setTimeout(startFinale, 1800); return; }
+    // спираме, щом се покаже подписът „С обич, Марто“ (не слизаме до самия край)
+    const sigBox = document.getElementById('sig').getBoundingClientRect();
+    if (sigBox.bottom <= innerHeight - 60 || acc >= max - 1) { stopAutoScroll(); setTimeout(startFinale, 5500); return; }
     requestAnimationFrame(autoStep);
   }
   // Ако човек сам почне да скролва или натиска – авто-скролът спира
