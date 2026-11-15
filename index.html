@@ -1155,6 +1155,7 @@ const MUSIC_VOLUME = 0.85;
     if (pulledBy < 40) { rope.style.transform = 'translateY(90px)'; setTimeout(() => rope.style.transform = 'translateY(0)', 220); }
     else rope.style.transform = 'translateY(0)';
     setTimeout(openCurtain, 260);
+    setTimeout(() => { rope.style.transition = ''; rope.style.transform = ''; }, 1200); // да не пречи на появяването накрая
   }
   rope.addEventListener('pointerup', release);
   rope.addEventListener('pointercancel', release);
