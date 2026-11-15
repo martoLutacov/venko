@@ -1168,6 +1168,7 @@ const MUSIC_VOLUME = 0.85;
     if (!autoOn) return;
     const dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
     const inLetter = letter.getBoundingClientRect().top < innerHeight * 0.35;
+    if (Math.abs(window.scrollY - acc) > 3) acc = window.scrollY; // ръчно превъртане – продължаваме оттам
     acc += (inLetter ? LETTER_SCROLL_PX_S : AUTO_SCROLL_PX_S) * dt;
     window.scrollTo(0, acc);
     const max = document.documentElement.scrollHeight - innerHeight;
@@ -1175,7 +1176,7 @@ const MUSIC_VOLUME = 0.85;
     requestAnimationFrame(autoStep);
   }
   // Ако човек сам почне да скролва или натиска – авто-скролът спира
-  ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(ev => addEventListener(ev, e => { if (autoOn && !e.target.closest?.('#soundFab')) stopAutoScroll(); }, { passive: true }));
+  // Авто-скролът не спира при натискане/клик. Ако някой сам превърти, просто продължава от новото място.
 
   /* ---------- Плавно появяване ---------- */
   const io = new IntersectionObserver(entries => entries.forEach(en => {
