@@ -924,6 +924,16 @@ const MUSIC_VOLUME = 0.85;
   const stage = $('#stage'), show = $('#show'), bar = $('#showBar');
   let music = $('#music');
   const audA = $('#music'), audB = $('#music2'), rope = $('#rope'), ropeLine = $('#ropeLine');
+  // Зареждаме песента веднъж в паметта, за да може винаги да се прескача в нея
+  // (някои сървъри не позволяват прескачане в аудио файл). Без интернет/от флашка остава обикновеният файл.
+  try {
+    fetch(audA.getAttribute('src')).then(r => r.ok ? r.blob() : null).then(b => {
+      if (!b) return;
+      const url = URL.createObjectURL(b);
+      audB.src = url;
+      if (audA.paused) audA.src = url;
+    }).catch(() => {});
+  } catch (e) {}
   const icons = () => window.lucide && lucide.createIcons();
   icons();
 
@@ -1032,7 +1042,7 @@ const MUSIC_VOLUME = 0.85;
   let xfading = false;
   function crossfadeLoop() { crossfadeTo(LOOP_TO, LOOP_XFADE_MS); }
   function crossfadeTo(toTime, ms) {
-    if (xfading) return;
+    if (xfading) return false;
     xfading = true;
     const old = music, nxt = old === audA ? audB : audA, vol = old.volume;
     nxt.muted = old.muted; nxt.currentTime = toTime; nxt.volume = 0;
@@ -1053,12 +1063,25 @@ const MUSIC_VOLUME = 0.85;
   function startFinale() {
     if (finaleOn || !finished) return;
     finaleOn = true; finaleReadyAt = performance.now() + FINALE_HOLD_MS;
+    setTimeout(finaleWatchdog, FINALE_HOLD_MS);
+    document.body.classList.add('finale');
+    $('#finale').classList.add('on');
     // колко остава до следващото „I've got you, brother“ (след минималното задържане)
     const t = music.currentTime, holdS = FINALE_HOLD_MS / 1000;
     const nextChorus = LYRICS.find(l => CHORUS_RE.test(l.text) && l.t >= t + holdS);
-    if (!nextChorus || nextChorus.t - t > FINALE_MAX_WAIT) crossfadeTo(FINALE_JUMP_TO, 2500);
-    document.body.classList.add('finale');
-    $('#finale').classList.add('on');
+    if (!nextChorus || nextChorus.t - t > FINALE_MAX_WAIT) jumpForFinale();
+  }
+  function jumpForFinale() {
+    if (crossfadeTo(FINALE_JUMP_TO, 2500) === false) setTimeout(jumpForFinale, 600); // ако тъкмо тече друг преход
+  }
+  // Предпазна мрежа: ако по някаква причина припевът не дойде навреме, прескачаме пак,
+  // а ако и тогава не стане – завесата се спуска сама.
+  function finaleWatchdog() {
+    if (!finaleOn || closing) return;
+    const waited = performance.now() - finaleReadyAt;
+    if (waited > 14000 && waited < 15000) jumpForFinale();
+    if (waited > 26000) { closeCurtain(); return; }
+    setTimeout(finaleWatchdog, 1000);
   }
   function closeCurtain() {
     if (closing) return;
