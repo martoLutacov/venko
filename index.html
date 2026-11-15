@@ -322,8 +322,9 @@ body.finale #soundFab { opacity: 0; pointer-events: none; }
 #stage.closing #show, #stage.closing .show-bar, #stage.closing .show-ui { display: none; }
 #stage.closing .curtain { transition: transform 11s cubic-bezier(.4,0,.25,1), filter 11s ease; }
 #stage.closing .valance, #stage.closing .valance-trim { transition: transform 7s cubic-bezier(.4,0,.25,1) 2.5s, opacity 5s ease 3.5s; }
-#stage.closing .stage-title { transition: opacity 4s ease 9.5s, transform 4s var(--spring) 9.5s; }
-#stage.closing .rope-wrap { transition: opacity 3s ease 11s; }
+/* заглавието и въжето се появяват чак малко след като завесата се затвори */
+#stage.closing .stage-title { transition: opacity 3s ease 12.5s, transform 3s var(--spring) 12.5s; }
+#stage.closing .rope-wrap { transition: opacity 3s ease 13.5s; }
 
 /* Плаващ бутон за звук (след слайдшоуто) */
 #soundFab { position: fixed; z-index: 50; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); opacity: 0; pointer-events: none; transition: opacity .8s; }
@@ -458,10 +459,10 @@ body.finale #soundFab { opacity: 0; pointer-events: none; }
   </div>
 
   <!-- Въжето: може да се дръпне надолу или просто да се натисне -->
-  <div class="rope-wrap" id="rope" role="button" tabindex="0" aria-label="Дръпни въжето, за да отвориш завесата">
+  <div class="rope-wrap" id="rope" role="button" tabindex="0" aria-label="Натисни въжето, за да отвориш завесата">
     <div class="rope" id="ropeLine"></div>
     <div class="tassel"><div class="knob"></div><div class="fringe"></div></div>
-    <div class="rope-label">Дръпни<small>и пусни звука</small></div>
+    <div class="rope-label">Натисни<small>и пусни звука</small></div>
   </div>
 
   <div class="show-ui">
@@ -1078,7 +1079,7 @@ const MUSIC_VOLUME = 0.85;
       subsBox.classList.remove('page-mode');
       stage.classList.remove('closing');
       running = false; finaleOn = false; closing = false;
-    }, CURTAIN_CLOSE_MS + 1500);
+    }, CURTAIN_CLOSE_MS + 6000);
   }
 
   const CHORUS_RE = /got you,? brother/i;
