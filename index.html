@@ -423,9 +423,9 @@ body.finale #soundFab { opacity: 0; pointer-events: none; }
 .letter p.lead::first-letter { font-family: Manrope, sans-serif; font-weight: 700; float: left; font-size: 3.4em; line-height: .9; padding: .06em .12em 0 0; color: var(--amber); }
 .letter .thanks p { margin: 0 0 .35em; }
 .letter .thanks { margin: 0 0 1.4em; border-left: 1px solid rgba(245,158,11,.35); padding-left: 22px; }
-.sig-text { font-family: Caveat, cursive; font-size: 92px; fill: transparent; stroke: #f5c46b; stroke-width: 1.2; stroke-dasharray: 900; stroke-dashoffset: 900; }
-.sig.signed .sig-text { animation: sign 4.5s ease forwards .4s; }
-@keyframes sign { 70% { stroke-dashoffset: 0; fill: transparent; } 100% { stroke-dashoffset: 0; fill: #f5c46b; } }
+.sig-text { font-family: Caveat, cursive; font-size: 92px; fill: transparent; stroke: #f5c46b; stroke-width: 1.2; stroke-dasharray: 420; stroke-dashoffset: 420; }
+.sig.signed .sig-text { animation: sign 5.2s ease-in-out forwards .3s; }
+@keyframes sign { 62% { stroke-dashoffset: 0; fill: transparent; } 100% { stroke-dashoffset: 0; fill: #f5c46b; } }
 
 /* Частици за сърца */
 #hearts { position: fixed; inset: 0; pointer-events: none; z-index: 40; }
@@ -1223,7 +1223,7 @@ const MUSIC_VOLUME = 0.85;
     const max = document.documentElement.scrollHeight - innerHeight;
     // спираме, щом се покаже подписът „С обич, Марто“ (не слизаме до самия край)
     const sigBox = document.getElementById('sig').getBoundingClientRect();
-    if (sigBox.bottom <= innerHeight - 60 || acc >= max - 1) { stopAutoScroll(); setTimeout(startFinale, 6500); return; }
+    if (sigBox.bottom <= innerHeight - 60 || acc >= max - 1) { stopAutoScroll(); setTimeout(startFinale, 7500); return; }
     requestAnimationFrame(autoStep);
   }
   // Ако човек сам почне да скролва или натиска – авто-скролът спира
