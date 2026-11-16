@@ -87,7 +87,7 @@ body.locked { overflow: hidden; height: 100vh; height: 100svh; }
       var(--velvet-3) 0px, var(--velvet-1) 14px, var(--velvet-2) 34px,
       #8f1b27 44px, var(--velvet-2) 56px, var(--velvet-1) 74px, var(--velvet-3) 92px);
   box-shadow: inset 0 0 120px rgba(0,0,0,.7);
-  transition: transform 3.2s cubic-bezier(.7,0,.2,1), filter 3.2s ease;
+  transition: transform 3.6s cubic-bezier(.42,0,.22,1), filter 3.6s ease;
   will-change: transform;
 }
 .curtain.left  { left: 0;  transform-origin: top left;  border-right: 1px solid rgba(0,0,0,.6); }
@@ -424,7 +424,7 @@ body.finale #soundFab { opacity: 0; pointer-events: none; }
 .letter .thanks p { margin: 0 0 .35em; }
 .letter .thanks { margin: 0 0 1.4em; border-left: 1px solid rgba(245,158,11,.35); padding-left: 22px; }
 .sig-text { font-family: Caveat, cursive; font-size: 92px; fill: transparent; stroke: #f5c46b; stroke-width: 1.2; stroke-dasharray: 900; stroke-dashoffset: 900; }
-.sig.in .sig-text { animation: sign 4.5s ease forwards .4s; }
+.sig.signed .sig-text { animation: sign 4.5s ease forwards .4s; }
 @keyframes sign { 70% { stroke-dashoffset: 0; fill: transparent; } 100% { stroke-dashoffset: 0; fill: #f5c46b; } }
 
 /* Частици за сърца */
@@ -1223,7 +1223,7 @@ const MUSIC_VOLUME = 0.85;
     const max = document.documentElement.scrollHeight - innerHeight;
     // спираме, щом се покаже подписът „С обич, Марто“ (не слизаме до самия край)
     const sigBox = document.getElementById('sig').getBoundingClientRect();
-    if (sigBox.bottom <= innerHeight - 60 || acc >= max - 1) { stopAutoScroll(); setTimeout(startFinale, 5500); return; }
+    if (sigBox.bottom <= innerHeight - 60 || acc >= max - 1) { stopAutoScroll(); setTimeout(startFinale, 6500); return; }
     requestAnimationFrame(autoStep);
   }
   // Ако човек сам почне да скролва или натиска – авто-скролът спира
@@ -1233,6 +1233,8 @@ const MUSIC_VOLUME = 0.85;
   const io = new IntersectionObserver(entries => entries.forEach(en => {
     if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
   }), { threshold: 0.15, rootMargin: '0px 0px -5% 0px' });
+  const sigIo = new IntersectionObserver(en => { if (en[0].isIntersecting) { en[0].target.classList.add('signed'); sigIo.disconnect(); } }, { threshold: 0.95 });
+  sigIo.observe(document.getElementById('sig'));
   function revealInView() { document.querySelectorAll('.reveal:not(.in)').forEach(el => io.observe(el)); }
   // кратко застъпване между съседни елементи в писмото
   document.querySelectorAll('.letter .reveal').forEach((el, i) => el.style.setProperty('--d', '0.05s'));
