@@ -206,6 +206,9 @@ body.locked { overflow: hidden; height: 100vh; height: 100svh; }
 .slide .vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55)); }
 .slide.title-card .fg { flex-direction: column; text-align: center; }
 .show-bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; z-index: 12; background: linear-gradient(90deg, var(--amber), var(--coral)); box-shadow: 0 0 12px rgba(245,158,11,.6); }
+/* Чист екран за заснемане: без въже и без бутони по време на шоуто */
+.rope-wrap, .show-ui, #soundFab { display: none !important; }
+#stage:not(.open):not(.gone) { cursor: pointer; }
 .show-ui { position: absolute; z-index: 12; bottom: max(18px, env(safe-area-inset-bottom)); right: 16px; display: flex; gap: 8px; opacity: 0; transition: opacity .8s ease; }
 #stage.open .show-ui { opacity: 1; transition-delay: 3s; }
 
@@ -1164,6 +1167,13 @@ const MUSIC_VOLUME = 0.85;
 
   /* Дърпане на въжето: влачене надолу или клик/Enter */
   let dragY = null, pulledBy = 0;
+  /* Пускане: клик/докосване където и да е по завесата, или който и да е клавиш */
+  stage.addEventListener('click', () => { if (!running && !closing) openCurtain(); });
+  addEventListener('keydown', e => {
+    if (running || closing || stage.classList.contains('gone')) return;
+    if (e.metaKey || e.ctrlKey || e.altKey || e.key === 'F11' || e.key === 'Escape') return; // напр. F11 за цял екран
+    e.preventDefault(); openCurtain();
+  });
   rope.addEventListener('pointerdown', e => { dragY = e.clientY; pulledBy = 0; rope.setPointerCapture(e.pointerId); ropeLine.style.transition = 'none'; });
   rope.addEventListener('pointermove', e => {
     if (dragY === null) return;
@@ -1187,13 +1197,27 @@ const MUSIC_VOLUME = 0.85;
   /* ---------- Авто-скрол надолу ---------- */
   let autoOn = false, lastT = 0, acc = 0;
   const letter = $('#letter');
-  function startAutoScroll() { autoOn = true; lastT = performance.now(); acc = window.scrollY; requestAnimationFrame(autoStep); }
+  function startAutoScroll() { cardsOpened = false; passOpened = false; document.getElementById('heartCard').classList.remove('open'); document.getElementById('pass').classList.remove('flipped'); autoOn = true; lastT = performance.now(); acc = window.scrollY; requestAnimationFrame(autoStep); }
   function stopAutoScroll() { autoOn = false; }
+  let cardsOpened = false, passOpened = false, cardsPauseUntil = 0;
   function autoStep(t) {
     if (!autoOn) return;
     const dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
     const inLetter = letter.getBoundingClientRect().top < innerHeight * 0.35;
+    // картите „Приятелска подкрепа“ се отварят сами, щом излязат на екрана (с кратка пауза)
+    const hb = document.getElementById('heartBtn'), heartBox = hb.closest('.glass'), passEl = document.getElementById('pass');
+    if (!cardsOpened && heartBox.getBoundingClientRect().top < innerHeight * 0.2) {
+      cardsOpened = true;
+      cardsPauseUntil = performance.now() + 4500;
+      setTimeout(() => { burst(hb); document.getElementById('heartCard').classList.add('open'); }, 300);
+    }
+    if (!passOpened && passEl.getBoundingClientRect().top < innerHeight * 0.3) {
+      passOpened = true;
+      cardsPauseUntil = Math.max(cardsPauseUntil, performance.now() + 4000);
+      setTimeout(() => passEl.classList.add('flipped'), cardsPauseUntil - performance.now() > 3000 ? 1800 : 400);
+    }
     if (Math.abs(window.scrollY - acc) > 3) acc = window.scrollY; // ръчно превъртане – продължаваме оттам
+    if (t < cardsPauseUntil) { requestAnimationFrame(autoStep); return; }
     acc += (inLetter ? LETTER_SCROLL_PX_S : AUTO_SCROLL_PX_S) * dt;
     window.scrollTo(0, acc);
     const max = document.documentElement.scrollHeight - innerHeight;
@@ -1290,7 +1314,9 @@ const MUSIC_VOLUME = 0.85;
     ctx.quadraticCurveTo(-1.6, 1.6, -11, 0); ctx.quadraticCurveTo(-1.6, -1.6, 0, -11);
     ctx.fill(); ctx.restore();
   }
+  let lastSY = scrollY;
   function burst(fromEl) {
+    lastSY = scrollY;
     const r = fromEl.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
     const n = reduce ? 10 : 46;
     for (let i = 0; i < n; i++) parts.push({
@@ -1305,7 +1331,10 @@ const MUSIC_VOLUME = 0.85;
   function loop() {
     ctx.clearRect(0, 0, innerWidth, innerHeight);
     parts = parts.filter(p => p.life < p.max);
+    // искрите се движат заедно със страницата при скрол
+    const dy = scrollY - lastSY; lastSY = scrollY;
     parts.forEach(p => {
+      p.y -= dy;
       p.life++; p.w += 0.02; p.x += p.vx + Math.sin(p.w) * 0.35; p.y += p.vy;
       const a = Math.sin(Math.PI * p.life / p.max) * 0.9;
       if (p.spark) { ctx.globalAlpha = a; ctx.fillStyle = '#ffd99a'; ctx.beginPath(); ctx.arc(p.x, p.y, 1.6, 0, 7); ctx.fill(); }
